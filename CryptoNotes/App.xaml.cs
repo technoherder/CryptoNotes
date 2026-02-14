@@ -1,4 +1,4 @@
-﻿using Xamarin.Forms;
+using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 using CryptoNotes.Services;
 using CryptoNotes.Views;
@@ -8,6 +8,8 @@ namespace CryptoNotes
   public partial class App : Application
   {
     static CryptoNotesDatabase database;
+    static MessagingApiService messagingApi;
+    static E2EEncryptionService encryptionService;
 
     public App()
     {
@@ -40,6 +42,28 @@ namespace CryptoNotes
       }
     }
 
+    public static MessagingApiService MessagingApi
+    {
+      get
+      {
+        if (messagingApi == null)
+        {
+          messagingApi = new MessagingApiService();
+        }
+        return messagingApi;
+      }
+    }
 
+    public static E2EEncryptionService Encryption
+    {
+      get
+      {
+        if (encryptionService == null)
+        {
+          encryptionService = new E2EEncryptionService();
+        }
+        return encryptionService;
+      }
+    }
   }
 }

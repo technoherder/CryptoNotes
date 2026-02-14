@@ -30,6 +30,14 @@ namespace CryptoNotes.Services
         {
           await Database.CreateTablesAsync(CreateFlags.None, typeof(Item)).ConfigureAwait(false);
         }
+        if (!Database.TableMappings.Any(m => m.MappedType.Name == typeof(ChatMessage).Name))
+        {
+          await Database.CreateTablesAsync(CreateFlags.None, typeof(ChatMessage)).ConfigureAwait(false);
+        }
+        if (!Database.TableMappings.Any(m => m.MappedType.Name == typeof(UserAccount).Name))
+        {
+          await Database.CreateTablesAsync(CreateFlags.None, typeof(UserAccount)).ConfigureAwait(false);
+        }
         initialized = true;
       }
     }
@@ -72,15 +80,79 @@ namespace CryptoNotes.Services
 
     public Task<List<Item>> DeleteItemAsync(Item item)
     {
-      //Item deletedItem = GetItemsAsync().Result.Where(x => x.Text == item.Text).FirstOrDefault();
-      return Database.QueryAsync<Item>("DELETE FROM [Item] WHERE [Text] = '" + item.Text + "';");
-      //return Database.DeleteAsync(deletedItem);
+      // Use parameterized query to prevent SQL injection
+      return Database.QueryAsync<Item>("DELETE FROM [Item] WHERE [Text] = ?;", item.Text);
     }
 
     public Task<List<Item>> DeleteAllItemsAsync()
     {
       // SQL queries are also possible
       return Database.QueryAsync<Item>("DELETE FROM [Item];");
+    }
+
+    // --- UserAccount methods ---
+
+    public Task<UserAccount> GetUserAccountAsync()
+    {
+      return Database.Table<UserAccount>().FirstOrDefaultAsync();
+    }
+
+    public async Task<int> SaveUserAccountAsync(UserAccount account)
+    {
+      var existing = await Database.Table<UserAccount>().FirstOrDefaultAsync();
+      if (existing != null)
+      {
+        account.Id = existing.Id;
+        return await Database.UpdateAsync(account);
+      }
+      return await Database.InsertAsync(account);
+    }
+
+    public Task DeleteUserAccountAsync()
+    {
+      return Database.DeleteAllAsync<UserAccount>();
+    }
+
+    // --- ChatMessage methods ---
+
+    public Task<int> SaveChatMessageAsync(ChatMessage message)
+    {
+      if (message.Id != 0)
+        return Database.UpdateAsync(message);
+      return Database.InsertAsync(message);
+    }
+
+    public Task<List<ChatMessage>> GetChatMessagesAsync(string otherUsername, string myUsername)
+    {
+      return Database.Table<ChatMessage>()
+        .Where(m =>
+          (m.SenderUsername == myUsername && m.RecipientUsername == otherUsername) ||
+          (m.SenderUsername == otherUsername && m.RecipientUsername == myUsername))
+        .OrderBy(m => m.SentAt)
+        .ToListAsync();
+    }
+
+    public async Task<List<ChatMessage>> GetLatestMessagesPerConversationAsync(string myUsername)
+    {
+      var allMessages = await Database.Table<ChatMessage>()
+        .Where(m => m.SenderUsername == myUsername || m.RecipientUsername == myUsername)
+        .OrderByDescending(m => m.SentAt)
+        .ToListAsync();
+
+      var seen = new System.Collections.Generic.HashSet<string>();
+      var result = new List<ChatMessage>();
+      foreach (var msg in allMessages)
+      {
+        var other = msg.SenderUsername == myUsername ? msg.RecipientUsername : msg.SenderUsername;
+        if (seen.Add(other))
+          result.Add(msg);
+      }
+      return result;
+    }
+
+    public Task DeleteAllChatMessagesAsync()
+    {
+      return Database.DeleteAllAsync<ChatMessage>();
     }
   }
 }

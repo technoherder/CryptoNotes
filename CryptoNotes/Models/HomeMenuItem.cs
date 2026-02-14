@@ -1,4 +1,4 @@
-﻿namespace CryptoNotes.Models
+namespace CryptoNotes.Models
 {
   public enum MenuItemType
   {
@@ -8,7 +8,9 @@
     EncryptMessage,
     DecryptMessage,
     Invite,
-    SelfDestruct
+    SelfDestruct,
+    Messages,
+    Register
   }
   public class HomeMenuItem
   {

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ContentPage
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="CryptoNotes.Views.ChatPage">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Refresh" Clicked="RefreshClicked" />
+    </ContentPage.ToolbarItems>
+    <ContentPage.Content>
+        <Grid BackgroundColor="Black" RowSpacing="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Messages list -->
+            <CollectionView x:Name="MessagesView" Grid.Row="0" BackgroundColor="Black"
+                Margin="10,5,10,5">
+                <CollectionView.EmptyView>
+                    <StackLayout Padding="15" VerticalOptions="CenterAndExpand">
+                        <Label Text="&#xf023;" FontFamily="FontAwesomeSolid" FontSize="50"
+                            TextColor="#9f00ff" HorizontalTextAlignment="Center" />
+                        <Label TextColor="#0086ff" FontFamily="{StaticResource ConsoleCode}" FontSize="18"
+                            HorizontalTextAlignment="Center"
+                            Text="End-to-end encrypted conversation. Messages are encrypted with PGP before leaving your device." />
+                    </StackLayout>
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <StackLayout Padding="5,3">
+                            <!-- Sender label -->
+                            <Label Text="{Binding SenderLabel}" TextColor="{Binding SenderColor}"
+                                FontFamily="{StaticResource ConsoleCode}" FontSize="12" />
+                            <!-- Message bubble -->
+                            <Frame BackgroundColor="{Binding BubbleColor}" CornerRadius="8"
+                                Padding="10,8" HorizontalOptions="{Binding Alignment}"
+                                HasShadow="false" Margin="{Binding BubbleMargin}">
+                                <Label Text="{Binding PlainText}" TextColor="White"
+                                    FontFamily="{StaticResource ConsoleCode}" FontSize="16" />
+                            </Frame>
+                            <Label Text="{Binding TimeStamp}" TextColor="#555555"
+                                FontFamily="{StaticResource ConsoleCode}" FontSize="10"
+                                HorizontalOptions="{Binding Alignment}" />
+                        </StackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Message input area -->
+            <Grid Grid.Row="1" BackgroundColor="#141d2b" Padding="10,5" ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Editor x:Name="MessageInput" Grid.Column="0" TextColor="#ffaf00"
+                    FontFamily="{StaticResource ConsoleCode}" FontSize="18"
+                    BackgroundColor="#0a0f1a" Placeholder="Type a message..."
+                    PlaceholderColor="Gray" HeightRequest="50"
+                    Keyboard="Chat" AutoSize="TextChanges" />
+
+                <Button x:Name="SendBtn" Grid.Column="1" Text="&#xf1d8;"
+                    FontFamily="FontAwesomeSolid" FontSize="25"
+                    BackgroundColor="#007fdf" TextColor="White"
+                    WidthRequest="55" HeightRequest="50"
+                    Clicked="SendMessageClicked" />
+            </Grid>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>
