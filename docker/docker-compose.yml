@@ -1,0 +1,100 @@
+# =============================================================================
+# CryptoNotes Docker Compose
+#
+# Usage:
+#   cp docker/.env.example docker/.env
+#   # Edit .env with your secret key
+#   docker-compose -f docker/docker-compose.yml up -d
+#
+# With SSL (production):
+#   docker-compose -f docker/docker-compose.yml --profile ssl up -d
+# =============================================================================
+
+version: "3.8"
+
+services:
+  # --------------------------------------------------------------------------
+  # CryptoNotes Server
+  # --------------------------------------------------------------------------
+  cryptonotes:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cryptonotes-server
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - cryptonotes-data:/app/data
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+      - Security__TokenSigningKey=${TOKEN_SIGNING_KEY:?Set TOKEN_SIGNING_KEY in .env}
+      - Security__TokenExpiryHours=${TOKEN_EXPIRY_HOURS:-24}
+      - Security__MaxLoginAttemptsPerMinute=${MAX_LOGIN_ATTEMPTS:-5}
+      - Security__MaxMessageSizeBytes=${MAX_MESSAGE_SIZE:-65536}
+      - Security__MinPasswordLength=${MIN_PASSWORD_LENGTH:-8}
+      - Security__MessageExpiryDays=${MESSAGE_EXPIRY_DAYS:-30}
+    # Security: limit resources
+    deploy:
+      resources:
+        limits:
+          cpus: "0.80"
+          memory: 256M
+        reservations:
+          memory: 64M
+    # Security: drop all capabilities, add only what's needed
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=10M
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # --------------------------------------------------------------------------
+  # Automatic backups (runs daily at 2 AM)
+  # --------------------------------------------------------------------------
+  backup:
+    image: alpine:3.18
+    container_name: cryptonotes-backup
+    restart: unless-stopped
+    volumes:
+      - cryptonotes-data:/data:ro
+      - cryptonotes-backups:/backups
+    entrypoint: /bin/sh
+    command: >
+      -c 'while true; do
+        TIMESTAMP=$$(date +%Y%m%d-%H%M%S);
+        if [ -f /data/cryptonotes.db ]; then
+          cp /data/cryptonotes.db "/backups/cryptonotes-$$TIMESTAMP.db";
+          echo "[$$TIMESTAMP] Backup created";
+          # Keep only last 7 backups
+          ls -t /backups/cryptonotes-*.db 2>/dev/null | tail -n +8 | xargs rm -f 2>/dev/null;
+        fi;
+        sleep 86400;
+      done'
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks: []
+
+volumes:
+  cryptonotes-data:
+    driver: local
+  cryptonotes-backups:
+    driver: local
+
+networks:
+  internal:
+    driver: bridge
+    internal: true

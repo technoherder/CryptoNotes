@@ -39,10 +39,12 @@ namespace CryptoNotes.Server.Controllers
             if (IsRateLimited())
                 return StatusCode(429, new { error = "Too many attempts. Try again later." });
 
-            // Validate password strength
-            int minPwdLen = _config.GetValue<int>("Security:MinPasswordLength", 8);
-            if (string.IsNullOrEmpty(request.Password) || request.Password.Length < minPwdLen)
-                return BadRequest(new { error = $"Password must be at least {minPwdLen} characters" });
+            RecordAttempt();
+
+            // Validate password strength (complexity + length)
+            var passwordError = ValidatePasswordComplexity(request.Password);
+            if (passwordError != null)
+                return BadRequest(new { error = passwordError });
 
             // Validate username format
             if (!IsValidUsername(request.Username))
@@ -95,6 +97,9 @@ namespace CryptoNotes.Server.Controllers
 
             RecordAttempt();
 
+            // Progressive delay: add latency based on recent failed attempts
+            await ApplyProgressiveDelay();
+
             var user = await _db.Users
                 .FirstOrDefaultAsync(u => u.Username == request.Username);
 
@@ -107,6 +112,10 @@ namespace CryptoNotes.Server.Controllers
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
                 return Unauthorized(new { error = "Invalid username or password" });
+
+            // Successful login: reset attempt counter for this IP
+            var ip = GetClientIp();
+            _loginAttempts.TryRemove(ip, out _);
 
             user.LastSeen = DateTime.UtcNow;
             await _db.SaveChangesAsync();
@@ -186,7 +195,52 @@ namespace CryptoNotes.Server.Controllers
             }
         }
 
-        #region Rate Limiting
+        #region Password Complexity
+
+        private string ValidatePasswordComplexity(string password)
+        {
+            int minLen = _config?.GetValue<int>("Security:MinPasswordLength", 8) ?? 8;
+
+            if (string.IsNullOrEmpty(password))
+                return "Password is required";
+
+            if (password.Length < minLen)
+                return $"Password must be at least {minLen} characters";
+
+            bool hasUpper = false, hasLower = false, hasDigit = false, hasSpecial = false;
+
+            foreach (char c in password)
+            {
+                if (char.IsUpper(c)) hasUpper = true;
+                else if (char.IsLower(c)) hasLower = true;
+                else if (char.IsDigit(c)) hasDigit = true;
+                else hasSpecial = true;
+            }
+
+            if (!hasUpper)
+                return "Password must contain at least one uppercase letter";
+            if (!hasLower)
+                return "Password must contain at least one lowercase letter";
+            if (!hasDigit)
+                return "Password must contain at least one digit";
+            if (!hasSpecial)
+                return "Password must contain at least one special character";
+
+            // Check for common weak patterns
+            string lower = password.ToLower();
+            string[] commonPasswords = { "password", "12345678", "qwerty", "letmein", "admin" };
+            foreach (var common in commonPasswords)
+            {
+                if (lower.Contains(common))
+                    return "Password is too common. Choose a stronger password.";
+            }
+
+            return null; // Password is valid
+        }
+
+        #endregion
+
+        #region Rate Limiting & Progressive Delay
 
         private bool IsRateLimited()
         {
@@ -229,8 +283,52 @@ namespace CryptoNotes.Server.Controllers
                 });
         }
 
+        /// <summary>
+        /// Progressive delay: adds increasing latency after failed attempts.
+        /// 1st attempt: 0ms, 2nd: 500ms, 3rd: 1s, 4th: 2s, 5th+: 4s
+        /// This slows down brute-force attacks without fully blocking legitimate users.
+        /// </summary>
+        private async Task ApplyProgressiveDelay()
+        {
+            var ip = GetClientIp();
+            if (_loginAttempts.TryGetValue(ip, out var entry))
+            {
+                int delayMs;
+                switch (entry.Count)
+                {
+                    case 0:
+                    case 1:
+                        delayMs = 0;
+                        break;
+                    case 2:
+                        delayMs = 500;
+                        break;
+                    case 3:
+                        delayMs = 1000;
+                        break;
+                    case 4:
+                        delayMs = 2000;
+                        break;
+                    default:
+                        delayMs = 4000;
+                        break;
+                }
+
+                if (delayMs > 0)
+                    await Task.Delay(delayMs);
+            }
+        }
+
         private string GetClientIp()
         {
+            // Check X-Forwarded-For for reverse proxy setups, but only trust the last hop
+            var forwarded = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(forwarded))
+            {
+                // Take the rightmost IP (closest proxy) to prevent spoofing
+                var ips = forwarded.Split(',');
+                return ips.Last().Trim();
+            }
             return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         }
 

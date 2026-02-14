@@ -1,0 +1,13 @@
+# Ignore everything except what we need
+**
+!CryptoNotes.Server/**
+!docker/Dockerfile
+
+# Ignore build artifacts within server
+CryptoNotes.Server/bin/
+CryptoNotes.Server/obj/
+
+# Ignore sensitive files
+**/.env
+**/appsettings.Production.json
+**/*.db

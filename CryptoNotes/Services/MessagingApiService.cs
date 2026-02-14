@@ -42,6 +42,16 @@ namespace CryptoNotes.Services
         public bool IsConfigured => !string.IsNullOrEmpty(_serverUrl) && !string.IsNullOrEmpty(_authToken);
 
         /// <summary>
+        /// Clear stored credentials from memory (called on app lock/sleep).
+        /// </summary>
+        public void ClearCredentials()
+        {
+            _authToken = null;
+            _serverUrl = null;
+            _client.DefaultRequestHeaders.Authorization = null;
+        }
+
+        /// <summary>
         /// Register a new account with the relay server.
         /// Sends the user's PGP public key for others to discover.
         /// </summary>

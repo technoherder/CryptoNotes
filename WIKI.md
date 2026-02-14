@@ -21,6 +21,9 @@ Complete guide for securely deploying the CryptoNotes end-to-end encrypted messa
 13. [Part 11: Ongoing Maintenance](#13-part-11-ongoing-maintenance)
 14. [Part 12: Security Architecture Reference](#14-part-12-security-architecture-reference)
 15. [Troubleshooting](#15-troubleshooting)
+16. [Automation Scripts](#16-automation-scripts)
+17. [Docker Deployment](#17-docker-deployment)
+18. [Security Improvements (v2)](#18-security-improvements-v2)
 
 ---
 
@@ -1269,3 +1272,246 @@ If a user triggers the auto-wipe (5 failed password attempts):
 - Previous message history on that device is gone
 
 There is no recovery. This is by design.
+
+---
+
+## 16. Automation Scripts
+
+CryptoNotes includes automation scripts to simplify deployment. These are in the `scripts/` directory.
+
+### 16.1 Automated Server Hardening
+
+Automates everything in [Part 1](#3-part-1-linux-server-setup-and-hardening):
+
+```bash
+# On a fresh Ubuntu 22.04 server:
+sudo bash scripts/server-setup.sh
+```
+
+**What it does:**
+- Creates a dedicated service user
+- Hardens SSH (key-only auth, custom port, rate limiting)
+- Installs and configures Fail2Ban (24h ban after 3 failed attempts)
+- Applies kernel hardening (sysctl settings)
+- Configures UFW firewall (SSH, HTTP, HTTPS only)
+- Installs .NET Core runtime
+- Enables automatic security updates
+- Creates application directories with restrictive permissions
+
+**Interactive prompts:**
+- SSH port (default: 2222)
+- Service username (default: cryptonotes)
+- Your SSH public key (optional)
+
+### 16.2 Automated Build & Deploy
+
+Automates [Part 3](#5-part-3-compile-and-deploy-the-server):
+
+```bash
+# First deployment (generates config, installs systemd service):
+bash scripts/deploy.sh --first-run
+
+# Update deployment (rebuilds and restarts):
+bash scripts/deploy.sh
+```
+
+**First run:**
+- Compiles the .NET server in Release mode
+- Generates a cryptographically random token signing key
+- Creates `appsettings.Production.json` with secure permissions (600)
+- Installs and enables the systemd service
+
+**Update run:**
+- Stops the running service
+- Backs up the database before updating
+- Rebuilds and deploys the new version
+- Restarts the service
+
+### 16.3 Automated SSL & Apache Setup
+
+Automates [Part 4](#6-part-4-https-with-lets-encrypt) and [Part 5](#7-part-5-apache-reverse-proxy-configuration):
+
+```bash
+sudo bash scripts/ssl-setup.sh
+```
+
+**What it does:**
+- Installs Apache and Certbot
+- Obtains a Let's Encrypt certificate (4096-bit RSA)
+- Generates 4096-bit DH parameters
+- Configures Apache as a secure reverse proxy (A+ SSL Labs rating)
+- Sets all security headers (HSTS, CSP, X-Frame-Options, etc.)
+- Restricts proxied routes to `/api` and `/health` only
+- Sets up daily auto-renewal cron job
+- Verifies HTTPS connectivity
+
+**Interactive prompts:**
+- Your domain name (e.g., msg.example.com)
+- Email for Let's Encrypt notifications
+
+### 16.4 Database Backup Script
+
+```bash
+# Interactive backup:
+bash scripts/backup.sh
+
+# Automated backup (for cron):
+bash scripts/backup.sh --auto
+
+# Restore from backup:
+bash scripts/backup.sh --restore /path/to/backup.db
+
+# Restore encrypted backup:
+bash scripts/backup.sh --restore /path/to/backup.db.gpg
+```
+
+**Features:**
+- Uses `sqlite3 .backup` for crash-safe backups (no corruption risk)
+- Optional GPG encryption of backups
+- Automatic rotation (keeps last 30 backups)
+- Integrity verification after backup
+- Supports Docker volume detection
+
+**Cron example** (daily at 2 AM):
+```bash
+crontab -e
+# Add:
+0 2 * * * /home/cryptonotes/CryptoNotes/scripts/backup.sh --auto
+```
+
+### 16.5 Health Check & Monitoring Script
+
+```bash
+# Check localhost:
+bash scripts/health-check.sh
+
+# Check remote server:
+bash scripts/health-check.sh --url https://msg.example.com
+
+# Continuous monitoring:
+bash scripts/health-check.sh --watch --interval 60
+
+# JSON output (for automation):
+bash scripts/health-check.sh --json
+```
+
+**What it checks:**
+- `/health` endpoint response and latency
+- API endpoint functionality
+- systemd service status
+- Docker container status
+- Disk usage (warning at 75%, critical at 90%)
+- Database file size
+- SSL certificate expiry (warning at 30 days, critical at 14 days)
+
+**Cron example** (every 5 minutes):
+```bash
+*/5 * * * * /home/cryptonotes/CryptoNotes/scripts/health-check.sh --json >> /var/log/cryptonotes-health.log
+```
+
+---
+
+## 17. Docker Deployment
+
+For the fastest deployment, use Docker. All security settings are pre-configured.
+
+### 17.1 Quick Start
+
+```bash
+cd CryptoNotes
+
+# Copy and edit environment file
+cp docker/.env.example docker/.env
+nano docker/.env
+# Set TOKEN_SIGNING_KEY to a random key:
+#   openssl rand -base64 48
+
+# Build and start
+docker-compose -f docker/docker-compose.yml up -d
+```
+
+That's it. The server is running on `127.0.0.1:5000`. Set up Apache/Nginx as a reverse proxy for HTTPS (see [Section 16.3](#163-automated-ssl--apache-setup)).
+
+### 17.2 Docker Security Features
+
+The Docker setup includes:
+
+- **Non-root container**: Runs as a dedicated `cryptonotes` user
+- **Read-only filesystem**: App binaries cannot be modified at runtime
+- **Dropped capabilities**: All Linux capabilities removed (`cap_drop: ALL`)
+- **No privilege escalation**: `no-new-privileges` security option
+- **Resource limits**: 256MB RAM, 80% CPU max
+- **Internal network**: Container is on an isolated bridge network
+- **Health checks**: Automatic container health monitoring
+- **Persistent data**: Database stored in a named Docker volume
+- **Auto-backup**: Companion container backs up the database daily
+- **Environment-based config**: Secrets passed via environment variables (never in images)
+
+### 17.3 Docker Commands
+
+```bash
+# View logs
+docker-compose -f docker/docker-compose.yml logs -f cryptonotes
+
+# Restart
+docker-compose -f docker/docker-compose.yml restart cryptonotes
+
+# Stop everything
+docker-compose -f docker/docker-compose.yml down
+
+# Update (rebuild with new code)
+docker-compose -f docker/docker-compose.yml build --no-cache
+docker-compose -f docker/docker-compose.yml up -d
+
+# Check health
+docker inspect --format='{{.State.Health.Status}}' cryptonotes-server
+
+# Access backup files
+docker volume inspect cryptonotes-backups
+```
+
+### 17.4 Full Automated Deployment (from scratch)
+
+For a complete fresh server setup with Docker:
+
+```bash
+# 1. Harden the server
+sudo bash scripts/server-setup.sh
+
+# 2. Install Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker cryptonotes
+
+# 3. Configure and start
+cp docker/.env.example docker/.env
+nano docker/.env  # Set TOKEN_SIGNING_KEY
+docker-compose -f docker/docker-compose.yml up -d
+
+# 4. Set up SSL
+sudo bash scripts/ssl-setup.sh
+
+# 5. Verify
+bash scripts/health-check.sh --url https://your-domain.com
+```
+
+---
+
+## 18. Security Improvements (v2)
+
+The latest security pass added these protections:
+
+### Server-Side
+- **Localhost-only binding**: Kestrel only listens on `127.0.0.1:5000` (not `0.0.0.0`). All external traffic must go through Apache.
+- **Password complexity enforcement**: Passwords must contain uppercase, lowercase, digits, and special characters. Common passwords are rejected.
+- **Progressive login delays**: Failed login attempts trigger increasing delays (0ms, 500ms, 1s, 2s, 4s) to slow brute-force attacks.
+- **Automatic message expiry**: Messages older than 30 days are automatically purged (configurable via `MessageExpiryDays`).
+- **Health endpoint**: `/health` endpoint for monitoring, with database connectivity verification.
+- **Startup warning**: Server warns loudly if using the default or weak token signing key.
+- **Additional security headers**: Content-Security-Policy, Permissions-Policy, Server header removal.
+- **IP detection improvement**: Proper X-Forwarded-For handling for reverse proxy setups, using rightmost IP to prevent spoofing.
+
+### Client-Side
+- **Timer cleanup**: Chat page polling timer stops immediately when navigating away (prevents background network activity).
+- **Memory clearing**: Plaintext messages and public keys are cleared from memory when leaving the chat page.
+- **Credential clearing**: Auth tokens are purged from the API service when the app locks or goes to sleep.
+- **Rate limiting on registration**: Registration endpoint now also has rate limiting to prevent account enumeration.

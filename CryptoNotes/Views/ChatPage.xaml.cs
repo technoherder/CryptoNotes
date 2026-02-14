@@ -14,6 +14,7 @@ namespace CryptoNotes.Views
     private Item _myKeyPair;
     private string _recipientPublicKey;
     private ObservableCollection<ChatMessageDisplay> _messages = new ObservableCollection<ChatMessageDisplay>();
+    private bool _isActive = false;
 
     public ChatPage(string otherUsername)
     {
@@ -26,22 +27,45 @@ namespace CryptoNotes.Views
     protected override async void OnAppearing()
     {
       base.OnAppearing();
+      _isActive = true;
       await InitializeChat();
       await LoadMessages();
 
       // Auto-refresh: poll for new messages
       Device.StartTimer(TimeSpan.FromSeconds(5), () =>
       {
-        if (this.IsVisible)
+        // Stop timer when page is no longer active
+        if (!_isActive)
+          return false;
+
+        Device.BeginInvokeOnMainThread(async () =>
         {
-          Device.BeginInvokeOnMainThread(async () =>
-          {
+          if (_isActive)
             await FetchAndLoadNewMessages();
-          });
-          return true;
-        }
-        return false;
+        });
+        return true;
       });
+    }
+
+    protected override void OnDisappearing()
+    {
+      base.OnDisappearing();
+      // Stop the polling timer and clear sensitive data from memory
+      _isActive = false;
+      ClearSensitiveData();
+    }
+
+    private void ClearSensitiveData()
+    {
+      // Clear plaintext messages from the in-memory collection
+      foreach (var msg in _messages)
+      {
+        msg.PlainText = null;
+      }
+      _messages.Clear();
+
+      // Clear the recipient's public key from memory
+      _recipientPublicKey = null;
     }
 
     private async Task InitializeChat()
@@ -102,9 +126,10 @@ namespace CryptoNotes.Views
 
       foreach (var msg in result.Data)
       {
+        string plainText = null;
         try
         {
-          var plainText = await App.Encryption.DecryptMessageAsync(
+          plainText = await App.Encryption.DecryptMessageAsync(
             msg.EncryptedContent, _myKeyPair.PrivateKey, _myKeyPair.PasswordKey);
 
           var chatMessage = new ChatMessage
@@ -128,6 +153,11 @@ namespace CryptoNotes.Views
         catch (Exception ex)
         {
           System.Diagnostics.Debug.WriteLine($"Decrypt failed: {ex.Message}");
+        }
+        finally
+        {
+          // Clear the decrypted plaintext variable
+          plainText = null;
         }
       }
 

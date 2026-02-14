@@ -30,6 +30,11 @@ namespace CryptoNotes
       if (securityService != null && securityService.IsUnlocked)
       {
         securityService.Lock();
+
+        // Clear cached auth token from the messaging API service
+        if (messagingApi != null)
+          messagingApi.ClearCredentials();
+
         MainPage = new AppLockPage();
       }
     }

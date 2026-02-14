@@ -1,3 +1,7 @@
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using CryptoNotes.Server.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -25,7 +29,6 @@ namespace CryptoNotes.Server
 
             services.AddControllers(options =>
             {
-                // Limit request body size to prevent DoS (64KB default)
                 options.MaxModelBindingCollectionSize = 100;
             });
 
@@ -36,6 +39,9 @@ namespace CryptoNotes.Server
             });
 
             services.AddSingleton<IConfiguration>(Configuration);
+
+            // Register background service for message expiry cleanup
+            services.AddHostedService<MessageExpiryService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -59,6 +65,10 @@ namespace CryptoNotes.Server
                 context.Response.Headers.Add("X-XSS-Protection", "1; mode=block");
                 context.Response.Headers.Add("Referrer-Policy", "no-referrer");
                 context.Response.Headers.Add("Cache-Control", "no-store");
+                context.Response.Headers.Add("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+                context.Response.Headers.Add("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+                // Remove server identification header
+                context.Response.Headers.Remove("Server");
                 await next();
             });
 
@@ -67,6 +77,29 @@ namespace CryptoNotes.Server
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+
+                // Health check endpoint for monitoring
+                endpoints.MapGet("/health", async context =>
+                {
+                    try
+                    {
+                        using (var scope = context.RequestServices.CreateScope())
+                        {
+                            var db = scope.ServiceProvider.GetRequiredService<ServerDbContext>();
+                            // Quick DB connectivity check
+                            await db.Database.ExecuteSqlRawAsync("SELECT 1");
+                        }
+                        context.Response.StatusCode = 200;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsync("{\"status\":\"healthy\"}");
+                    }
+                    catch
+                    {
+                        context.Response.StatusCode = 503;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsync("{\"status\":\"unhealthy\"}");
+                    }
+                });
             });
 
             // Ensure database is created
@@ -74,6 +107,63 @@ namespace CryptoNotes.Server
             {
                 var db = scope.ServiceProvider.GetRequiredService<ServerDbContext>();
                 db.Database.EnsureCreated();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Background service that periodically deletes expired messages.
+    /// Messages older than the configured expiry period (default 30 days) are permanently removed.
+    /// The server only stores encrypted ciphertext, but removing old messages limits exposure.
+    /// </summary>
+    public class MessageExpiryService : BackgroundService
+    {
+        private readonly IServiceProvider _services;
+        private readonly IConfiguration _config;
+
+        public MessageExpiryService(IServiceProvider services, IConfiguration config)
+        {
+            _services = services;
+            _config = config;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    int expiryDays = _config.GetValue<int>("Security:MessageExpiryDays", 30);
+                    if (expiryDays > 0)
+                    {
+                        var cutoff = DateTime.UtcNow.AddDays(-expiryDays);
+
+                        using (var scope = _services.CreateScope())
+                        {
+                            var db = scope.ServiceProvider.GetRequiredService<ServerDbContext>();
+                            var expired = await db.Messages
+                                .Where(m => m.SentAt < cutoff)
+                                .ToListAsync(stoppingToken);
+
+                            if (expired.Any())
+                            {
+                                db.Messages.RemoveRange(expired);
+                                await db.SaveChangesAsync(stoppingToken);
+                            }
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch
+                {
+                    // Log and continue - don't crash the service
+                }
+
+                // Run cleanup every 6 hours
+                await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
             }
         }
     }
