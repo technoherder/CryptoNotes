@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.IO;
+using System.Security.Cryptography;
 using CryptoNotes.ViewModels;
 using PgpCore;
 using Xamarin.Forms;
@@ -23,40 +24,73 @@ namespace CryptoNotes.Views
       decryptBtn.Opacity = 0;
       Item privateKey = this.privatePicker.SelectedItem as Item;
 
-      //string publicFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "public.asc");
-      string privateFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "private.asc");
-      string encryptedMessage = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "encrypted.pgp");
-      string decryptedMessage = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "decrypted.txt");
-
-      using (StreamWriter streamWriter = new StreamWriter(privateFile, true))
-        streamWriter.WriteLine(privateKey.PrivateKey);
-
-      using (StreamWriter streamWriter = new StreamWriter(encryptedMessage, true))
-        streamWriter.WriteLine(MessageTxt.Text);
-
-      using (PGP pgp = new PGP())
+      if (privateKey == null)
       {
-        // Decrypt file and verify
-        //await pgp.DecryptFileAndVerifyAsync(encryptedMessage, decryptedMessage, publicFile, privateFile, viewModel.Item.PasswordKey);
-
-        await pgp.DecryptFileAsync(encryptedMessage, decryptedMessage, privateFile, PwdTxt.Text);
-
+        await DisplayAlert("Error", "Please select a private key", "OK");
+        decryptBtn.Opacity = 1;
+        return;
       }
 
-      string safeMessage = File.ReadAllText(decryptedMessage);
+      // Use unique file names to prevent collisions
+      var id = Guid.NewGuid().ToString("N");
+      string privateFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), $"dec_priv_{id}.asc");
+      string encryptedMessage = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), $"dec_enc_{id}.pgp");
+      string decryptedMessage = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), $"dec_out_{id}.txt");
 
-      using (StreamWriter streamWriter = new StreamWriter(decryptedMessage, true))
-        streamWriter.WriteLine(DateTime.UtcNow);
+      string safeMessage = null;
 
-      using (StreamWriter streamWriter = new StreamWriter(encryptedMessage, true))
-        streamWriter.WriteLine(DateTime.UtcNow);
+      try
+      {
+        File.WriteAllText(privateFile, privateKey.PrivateKey);
+        File.WriteAllText(encryptedMessage, MessageTxt.Text);
 
-      using (StreamWriter streamWriter = new StreamWriter(privateFile, true))
-        streamWriter.WriteLine(DateTime.UtcNow);
+        using (PGP pgp = new PGP())
+        {
+          await pgp.DecryptFileAsync(encryptedMessage, decryptedMessage, privateFile, PwdTxt.Text);
+        }
 
+        safeMessage = File.ReadAllText(decryptedMessage);
+      }
+      catch (Exception ex)
+      {
+        await DisplayAlert("Decryption Error", "Failed to decrypt. Check your key and password.", "OK");
+      }
+      finally
+      {
+        // Securely delete all temp files
+        SecureDeleteFile(privateFile);
+        SecureDeleteFile(encryptedMessage);
+        SecureDeleteFile(decryptedMessage);
+      }
+
+      PwdTxt.Text = string.Empty;
       decryptBtn.Opacity = 1;
-      await DisplayAlert("Alert", safeMessage, "OK");
 
+      if (safeMessage != null)
+        await DisplayAlert("Decrypted Message", safeMessage, "OK");
+    }
+
+    private static void SecureDeleteFile(string path)
+    {
+      try
+      {
+        if (!File.Exists(path)) return;
+        var length = new FileInfo(path).Length;
+        if (length > 0)
+        {
+          var buffer = new byte[length];
+          File.WriteAllBytes(path, buffer);
+          using (var rng = RandomNumberGenerator.Create())
+            rng.GetBytes(buffer);
+          File.WriteAllBytes(path, buffer);
+          Array.Clear(buffer, 0, buffer.Length);
+        }
+        File.Delete(path);
+      }
+      catch
+      {
+        try { File.Delete(path); } catch { }
+      }
     }
   }
 }

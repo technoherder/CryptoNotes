@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ContentPage
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="CryptoNotes.Views.RegisterPage" Title="/NICK">
+    <ContentPage.Content>
+        <ScrollView BackgroundColor="#0a0a0a" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <StackLayout Spacing="10" Padding="12">
+
+                <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                    Text="*** Server Registration ***" />
+
+                <BoxView HeightRequest="1" BackgroundColor="#1a8c1a" />
+
+                <!-- Status indicator -->
+                <Frame x:Name="StatusFrame" BackgroundColor="#111111" CornerRadius="0" Padding="10"
+                    IsVisible="false" BorderColor="#1a8c1a">
+                    <Label x:Name="StatusLabel" TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14" />
+                </Frame>
+
+                <!-- Already logged in view -->
+                <StackLayout x:Name="LoggedInView" IsVisible="false" Spacing="8">
+                    <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="*** You are connected" />
+                    <Label FontFamily="{StaticResource ConsoleCode}" FontSize="16">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="NICK: " ForegroundColor="#1a8c1a" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                    <Label x:Name="UsernameDisplay" TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="20" />
+                    <Label x:Name="ServerDisplay" TextColor="#555555" FontFamily="{StaticResource ConsoleCode}" FontSize="13" />
+                    <Button Text="/QUIT - Log Out"
+                        FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        BackgroundColor="#111111" TextColor="#ff3333"
+                        BorderColor="#ff3333" BorderWidth="1"
+                        Clicked="LogoutClicked" />
+                </StackLayout>
+
+                <!-- Registration / Login form -->
+                <StackLayout x:Name="AuthForm" Spacing="10">
+                    <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="SERVER:" />
+                    <Entry x:Name="ServerUrlTxt" TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}"
+                        FontSize="16" BackgroundColor="#111111" PlaceholderColor="#1a8c1a"
+                        Keyboard="Url" Placeholder="irc.example.com:5000" />
+
+                    <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="NICK:" />
+                    <Entry x:Name="UsernameTxt" TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}"
+                        FontSize="18" BackgroundColor="#111111" PlaceholderColor="#1a8c1a"
+                        Keyboard="Plain" Placeholder="your_nick" />
+
+                    <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="PASS:" />
+                    <Entry x:Name="PasswordTxt" TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}"
+                        FontSize="18" BackgroundColor="#111111" PlaceholderColor="#1a8c1a"
+                        Keyboard="Plain" IsPassword="true" Placeholder="********" />
+
+                    <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="PGP KEY:" />
+                    <Picker x:Name="KeyPicker"
+                        Title="Select key pair"
+                        TitleColor="#1a8c1a" />
+
+                    <Button x:Name="RegisterBtn" Text="/REGISTER"
+                        FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        BackgroundColor="#111111" TextColor="#33ff33"
+                        BorderColor="#1a8c1a" BorderWidth="1"
+                        Margin="0,8,0,0" Clicked="RegisterClicked" />
+
+                    <Label TextColor="#555555" FontFamily="{StaticResource ConsoleCode}" FontSize="13"
+                        Text="*** Already registered? Identify below:" HorizontalTextAlignment="Center" />
+
+                    <Button x:Name="LoginBtn" Text="/IDENTIFY - Log In"
+                        FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        BackgroundColor="#111111" TextColor="#00e5ff"
+                        BorderColor="#00e5ff" BorderWidth="1"
+                        Clicked="LoginClicked" />
+                </StackLayout>
+            </StackLayout>
+        </ScrollView>
+    </ContentPage.Content>
+</ContentPage>

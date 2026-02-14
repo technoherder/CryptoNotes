@@ -1,72 +1,48 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-<ContentPage BackgroundColor="Black" xmlns="http://xamarin.com/schemas/2014/forms"
+<?xml version="1.0" encoding="UTF-8"?>
+<ContentPage BackgroundColor="#0a0a0a" xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="CryptoNotes.Views.NewItemPage" Title="New Item">
+             x:Class="CryptoNotes.Views.NewItemPage" Title="/KEYGEN">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Cancel" Clicked="Cancel_Clicked" />
+        <ToolbarItem Text="/cancel" Clicked="Cancel_Clicked" />
     </ContentPage.ToolbarItems>
     <ContentPage.Content>
-                        <ScrollView HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-        <StackLayout Spacing="20" Padding="15">
+        <ScrollView HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <StackLayout Spacing="10" Padding="15">
 
-            <Label>
-    <Label.FormattedText>
-        <FormattedString>
-            <Span Text="&#xf120;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#9f00ff" />
-            <Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Title:" FontSize="35" />
-        </FormattedString>
-    </Label.FormattedText>
-</Label>
+                <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                    Text="*** Generate new PGP key pair:" />
+                <BoxView HeightRequest="1" BackgroundColor="#1a8c1a" />
 
-            <Entry TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.Text}"
-                   BackgroundColor="#141d2b" FontSize="55"  />
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="TITLE:" />
+                <Entry TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.Text}"
+                    BackgroundColor="#111111" FontSize="16" PlaceholderColor="#1a8c1a" Placeholder="key_name" />
 
-            <Label>
-    <Label.FormattedText>
-        <FormattedString>
-            <Span Text="&#xf4a6;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#9f00ff" />
-            <Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Description" FontSize="45" />
-        </FormattedString>
-    </Label.FormattedText>
-</Label> 
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="DESCRIPTION:" />
+                <Editor TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.Description}"
+                    BackgroundColor="#111111" FontSize="14" Keyboard="Chat"
+                    PlaceholderColor="#1a8c1a" Placeholder="optional description" />
 
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="EMAIL:" />
+                <Editor TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.EmailKey}"
+                    FontSize="14" BackgroundColor="#111111" Keyboard="Email"
+                    PlaceholderColor="#1a8c1a" />
 
-            <Editor TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.Description}"
-                    BackgroundColor="#141d2b" FontSize="55" Margin="0" Keyboard="Chat" />
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="PASSPHRASE:" />
+                <Entry TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.PasswordKey}"
+                    FontSize="16" BackgroundColor="#111111" Keyboard="Plain" IsPassword="true"
+                    PlaceholderColor="#1a8c1a" Placeholder="********" />
 
-
-                      <Label>
-    <Label.FormattedText>
-        <FormattedString>
-            <Span Text="&#xf1fa;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#9f00ff" />
-            <Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Email:" FontSize="45"  />
-        </FormattedString>
-    </Label.FormattedText>
-</Label>
-
-
-
-            <Editor TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.EmailKey}"
-                    FontSize="50" BackgroundColor="#141d2b" Keyboard="Email"  />
-
-
-            <Label>
-    <Label.FormattedText>
-        <FormattedString>
-            <Span Text="&#xf21b;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#9f00ff" />
-            <Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Password:" FontSize="45" />
-        </FormattedString>
-    </Label.FormattedText>
-</Label> 
-
-
-
-            <Entry TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.PasswordKey}"
-                    FontSize="50" BackgroundColor="#141d2b" Keyboard="Plain" IsPassword="true" Placeholder="Password"  />
-            <Button Margin="0,10,0,0" Text="Generate Private Key" Command="{Binding OpenWebCommand}" x:Name="createKeyBtn"
-                    BackgroundColor="#0db4ba" TextColor="White" Clicked="GeneratePrivateKey" />
-
-        </StackLayout>
-                            </ScrollView>
+                <Button Margin="0,10,0,0" Text="/KEYGEN - Generate Key Pair"
+                    x:Name="createKeyBtn"
+                    FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    BackgroundColor="#111111" TextColor="#33ff33"
+                    BorderColor="#1a8c1a" BorderWidth="1"
+                    Clicked="GeneratePrivateKey" />
+            </StackLayout>
+        </ScrollView>
     </ContentPage.Content>
 </ContentPage>

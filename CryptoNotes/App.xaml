@@ -1,16 +1,30 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Application xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="CryptoNotes.App">
     <Application.Resources>
         <ResourceDictionary>
-            <!--Global Styles-->
-    <OnPlatform x:TypeArguments="x:String" x:Key="ConsoleCode">
-        <On Platform="Android" Value="clacon.ttf#Classic Console" />
-        <On Platform="iOS" Value="Classic Console" />
-    </OnPlatform>
-            <Color x:Key="NavigationPrimary">#000000</Color>
+            <!--Global Styles - IRC Retro Terminal Theme-->
+            <OnPlatform x:TypeArguments="x:String" x:Key="ConsoleCode">
+                <On Platform="Android" Value="clacon.ttf#Classic Console" />
+                <On Platform="iOS" Value="Classic Console" />
+            </OnPlatform>
+
+            <!-- IRC Color Palette -->
+            <Color x:Key="TermBg">#0a0a0a</Color>
+            <Color x:Key="TermGreen">#33ff33</Color>
+            <Color x:Key="TermAmber">#ffb000</Color>
+            <Color x:Key="TermCyan">#00e5ff</Color>
+            <Color x:Key="TermWhite">#cccccc</Color>
+            <Color x:Key="TermDimGreen">#1a8c1a</Color>
+            <Color x:Key="TermRed">#ff3333</Color>
+            <Color x:Key="TermMagenta">#ff55ff</Color>
+            <Color x:Key="TermBlue">#5555ff</Color>
+            <Color x:Key="TermYellow">#ffff55</Color>
+            <Color x:Key="TermDarkPanel">#111111</Color>
+            <Color x:Key="NavigationPrimary">#0a0a0a</Color>
+
             <Style TargetType="NavigationPage">
                 <Setter Property="BarBackgroundColor" Value="{StaticResource NavigationPrimary}" />
-                <Setter Property="BarTextColor" Value="#20C20E" />
+                <Setter Property="BarTextColor" Value="#33ff33" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>

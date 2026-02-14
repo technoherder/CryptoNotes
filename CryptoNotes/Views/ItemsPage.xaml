@@ -1,27 +1,47 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<ContentPage BackgroundColor="Black" xmlns="http://xamarin.com/schemas/2014/forms"
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage BackgroundColor="#0a0a0a" xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="CryptoNotes.Views.ItemsPage" Title="{Binding Title}" x:Name="BrowseItemsPage">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Add" Clicked="AddItem_Clicked" />
+        <ToolbarItem Text="/new" Clicked="AddItem_Clicked" />
     </ContentPage.ToolbarItems>
-    <RefreshView BackgroundColor="Black" IsRefreshing="{Binding IsBusy, Mode=TwoWay}" Command="{Binding LoadItemsCommand}">
-        <CollectionView x:Name="ItemsCollectionView" BackgroundColor="Black" ItemsSource="{Binding Items}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                        <ScrollView HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-                    <StackLayout Padding="10">
-          
-                        <Label FontFamily="{StaticResource ConsoleCode}" TextColor="#0086ff" Text="{Binding Text}" LineBreakMode="NoWrap" Style="{DynamicResource ListItemTextStyle}" FontSize="35" />
-                        <Label FontFamily="{StaticResource ConsoleCode}" TextColor="#ffaf00" Text="{Binding Description}" LineBreakMode="NoWrap" Style="{DynamicResource ListItemDetailTextStyle}" FontSize="25" />
-                        <StackLayout.GestureRecognizers>
-                            <TapGestureRecognizer NumberOfTapsRequired="1" Tapped="OnItemSelected">
-                            </TapGestureRecognizer>
-                        </StackLayout.GestureRecognizers>
+    <StackLayout BackgroundColor="#0a0a0a" Spacing="0">
+        <StackLayout BackgroundColor="#111111" Padding="12,8">
+            <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                Text="*** Your PGP key pairs:" />
+        </StackLayout>
+        <BoxView HeightRequest="1" BackgroundColor="#1a8c1a" />
+
+        <RefreshView BackgroundColor="#0a0a0a" IsRefreshing="{Binding IsBusy, Mode=TwoWay}" Command="{Binding LoadItemsCommand}"
+            RefreshColor="#33ff33">
+            <CollectionView x:Name="ItemsCollectionView" BackgroundColor="#0a0a0a" ItemsSource="{Binding Items}">
+                <CollectionView.EmptyView>
+                    <StackLayout Padding="15">
+                        <Label TextColor="#1a8c1a" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                            Text="*** No keys found. Use /new to generate a key pair." />
                     </StackLayout>
-                            </ScrollView>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </RefreshView>
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <StackLayout Padding="12,8" BackgroundColor="#0a0a0a">
+                            <Label FontFamily="{StaticResource ConsoleCode}" FontSize="16">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="[key] " ForegroundColor="#1a8c1a" />
+                                        <Span Text="{Binding Text}" ForegroundColor="#33ff33" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Label FontFamily="{StaticResource ConsoleCode}" TextColor="#ffb000"
+                                Text="{Binding Description}" LineBreakMode="TailTruncation" MaxLines="1" FontSize="13" />
+                            <BoxView HeightRequest="1" BackgroundColor="#1a1a1a" Margin="0,4,0,0" />
+                            <StackLayout.GestureRecognizers>
+                                <TapGestureRecognizer NumberOfTapsRequired="1" Tapped="OnItemSelected" />
+                            </StackLayout.GestureRecognizers>
+                        </StackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </StackLayout>
 </ContentPage>

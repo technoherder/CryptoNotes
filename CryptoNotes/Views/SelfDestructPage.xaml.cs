@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 using Xamarin.Forms;
@@ -12,11 +12,26 @@ namespace CryptoNotes.Views
       InitializeComponent();
     }
 
-    void SelfDestructClicked(System.Object sender, System.EventArgs e)
+    async void SelfDestructClicked(System.Object sender, System.EventArgs e)
     {
+      bool confirm = await DisplayAlert("SELF DESTRUCT",
+        "This will permanently destroy ALL keys, messages, and account data. This cannot be undone.",
+        "DESTROY EVERYTHING", "Cancel");
+
+      if (!confirm) return;
+
       DeleteBtn.Opacity = 0;
-      App.Database.DeleteAllItemsAsync();
-      DeleteBtn.FadeTo(1, 400);
+
+      // Delete all data from database
+      await App.Database.DeleteAllItemsAsync();
+      await App.Database.DeleteAllChatMessagesAsync();
+      await App.Database.DeleteUserAccountAsync();
+
+      // Wipe security data and encryption keys
+      App.Security.WipeAllData();
+
+      // Return to lock screen
+      Application.Current.MainPage = new AppLockPage();
     }
   }
 }

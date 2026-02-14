@@ -1,20 +1,28 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="CryptoNotes.Views.InvitePage" Title="Invite">
+             x:Class="CryptoNotes.Views.InvitePage" Title="/INVITE">
     <ContentPage.Content>
-            <ScrollView BackgroundColor="Black" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-                <StackLayout Spacing="20" Padding="15">
+        <ScrollView BackgroundColor="#0a0a0a" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <StackLayout Spacing="10" Padding="15">
 
-                    <Label Text="&#xf234;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#1ae3f3" />
-                    <Label TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Select the Public Key to Share:" FontSize="45" />
+                <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                    Text="*** Share your public key:" />
+                <BoxView HeightRequest="1" BackgroundColor="#1a8c1a" />
 
-                    <Picker x:Name="publicPicker"
-                            Title="Select Public Key"
-                            TitleColor="Red">
-                    </Picker>
+                <Label TextColor="#cccccc" FontFamily="{StaticResource ConsoleCode}" FontSize="13"
+                    Text="*** Select a public key to share with another user.&#10;*** They will need this to send you encrypted messages." />
 
-            <Button Margin="0,10,0,0" Text="Invite" Command="{Binding OpenWebCommand}"
-                    BackgroundColor="#007fdf" TextColor="White" Clicked="InviteMessageClicked" />
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="PUBLIC KEY:" />
+                <Picker x:Name="publicPicker"
+                    Title="Select Public Key"
+                    TitleColor="#1a8c1a" TextColor="#33ff33" BackgroundColor="#111111" />
+
+                <Button Margin="0,10,0,0" Text="/INVITE - Share Key"
+                    FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    BackgroundColor="#111111" TextColor="#00e5ff"
+                    BorderColor="#00e5ff" BorderWidth="1"
+                    Clicked="InviteMessageClicked" />
             </StackLayout>
         </ScrollView>
     </ContentPage.Content>

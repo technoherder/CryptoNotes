@@ -1,53 +1,50 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage
-	xmlns="http://xamarin.com/schemas/2014/forms"
-	xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="CryptoNotes.Views.ItemDetailPage" Title="{Binding Title}">
-	<ContentPage.ToolbarItems>
-		<ToolbarItem Text="Delete" Clicked="Delete_Clicked" />
-	</ContentPage.ToolbarItems>
-	<ContentPage.Content>
-		<ScrollView BackgroundColor="Black" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-			<StackLayout Spacing="20" Padding="15" BackgroundColor="Black">
-				<Label>
-					<Label.FormattedText>
-						<FormattedString>
-							<Span Text="&#xf120;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#9f00ff" />
-							<Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Title:" FontSize="35" />
-						</FormattedString>
-					</Label.FormattedText>
-				</Label>
-				<Editor TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.Text}"
-                    BackgroundColor="#141d2b" FontSize="55" />
-				<Label>
-					<Label.FormattedText>
-						<FormattedString>
-							<Span Text="&#xf4a6;" FontFamily="FontAwesomeSolid" FontSize="37" TextColor="#9f00ff" />
-							<Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Description:" FontSize="45" />
-						</FormattedString>
-					</Label.FormattedText>
-				</Label>
-				<Editor TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.Description}"
-                    FontSize="50" BackgroundColor="#141d2b"  />
-				<Label>
-					<Label.FormattedText>
-						<FormattedString>
-							<Span Text="&#xf1fa;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#9f00ff" />
-							<Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Email:" FontSize="45"  />
-						</FormattedString>
-					</Label.FormattedText>
-				</Label>
-				<Editor TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.EmailKey}"
-                    FontSize="50" BackgroundColor="#141d2b" IsReadOnly="true" />
-				<Label TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Private Key:" FontSize="45" />
-				<Editor TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.PrivateKey}"
-                    FontSize="25" BackgroundColor="#141d2b" IsReadOnly="true" />
-				<Label TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Public Key:" FontSize="45" />
-				<Editor TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.PublicKey}"
-                    FontSize="25" BackgroundColor="#141d2b" IsReadOnly="true" />
-				<Button Margin="0,10,0,0" Text="Re-key" Command="{Binding OpenWebCommand}"
-                    BackgroundColor="#007fdf" TextColor="White" Clicked="GeneratePrivateKey" />
-			</StackLayout>
-		</ScrollView>
-	</ContentPage.Content>
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="CryptoNotes.Views.ItemDetailPage" Title="{Binding Title}">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="/del" Clicked="Delete_Clicked" />
+    </ContentPage.ToolbarItems>
+    <ContentPage.Content>
+        <ScrollView BackgroundColor="#0a0a0a" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <StackLayout Spacing="10" Padding="15" BackgroundColor="#0a0a0a">
+
+                <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                    Text="*** Key pair details:" />
+                <BoxView HeightRequest="1" BackgroundColor="#1a8c1a" />
+
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="TITLE:" />
+                <Editor TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.Text}"
+                    BackgroundColor="#111111" FontSize="16" />
+
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="DESCRIPTION:" />
+                <Editor TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.Description}"
+                    FontSize="14" BackgroundColor="#111111" />
+
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="EMAIL:" />
+                <Editor TextColor="#cccccc" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.EmailKey}"
+                    FontSize="14" BackgroundColor="#111111" IsReadOnly="true" />
+
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="PRIVATE KEY:" />
+                <Editor TextColor="#ff3333" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.PrivateKey}"
+                    FontSize="11" BackgroundColor="#111111" IsReadOnly="true" HeightRequest="120" />
+
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="PUBLIC KEY:" />
+                <Editor TextColor="#00e5ff" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.PublicKey}"
+                    FontSize="11" BackgroundColor="#111111" IsReadOnly="true" HeightRequest="120" />
+
+                <Button Margin="0,10,0,0" Text="/REKEY - Generate New Key"
+                    FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    BackgroundColor="#111111" TextColor="#ffb000"
+                    BorderColor="#ffb000" BorderWidth="1"
+                    Clicked="GeneratePrivateKey" />
+            </StackLayout>
+        </ScrollView>
+    </ContentPage.Content>
 </ContentPage>

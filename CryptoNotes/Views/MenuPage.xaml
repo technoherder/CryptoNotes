@@ -1,14 +1,31 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="CryptoNotes.Views.MenuPage" Title="Menu">
-    <StackLayout BackgroundColor="Black" VerticalOptions="FillAndExpand">
-        <ListView x:Name="ListViewMenu" HasUnevenRows="True" BackgroundColor="Black">
+    <StackLayout BackgroundColor="#0a0a0a" VerticalOptions="FillAndExpand" Spacing="0">
+
+        <!-- IRC-style header -->
+        <StackLayout BackgroundColor="#111111" Padding="12,15,12,10">
+            <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                Text="CryptoNotes IRC" />
+            <Label TextColor="#1a8c1a" FontFamily="{StaticResource ConsoleCode}" FontSize="12"
+                Text="[ encrypted channels ]" />
+        </StackLayout>
+
+        <BoxView HeightRequest="1" BackgroundColor="#1a8c1a" />
+
+        <ListView x:Name="ListViewMenu" HasUnevenRows="True" BackgroundColor="#0a0a0a"
+            SeparatorVisibility="None">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <ViewCell>
-                        <Grid Padding="10">
-                            <Label Text="{Binding Icon}" FontFamily="FontAwesomeSolid" FontSize="30" TextColor="#0086ff"  />
-                            <Label FontFamily="{StaticResource ConsoleCode}" Text="{Binding Title}" FontSize="50"
-                                    Margin="40,0,0,0" TextColor="#0086ff" />
+                        <Grid Padding="12,8" ColumnSpacing="8" BackgroundColor="#0a0a0a">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Text="{Binding Icon}" FontFamily="FontAwesomeSolid"
+                                FontSize="18" TextColor="#1a8c1a" VerticalOptions="Center" />
+                            <Label Grid.Column="1" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Title}"
+                                FontSize="20" TextColor="#33ff33" VerticalOptions="Center" />
                         </Grid>
                     </ViewCell>
                 </DataTemplate>
