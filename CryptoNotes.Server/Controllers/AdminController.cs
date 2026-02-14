@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -23,25 +24,90 @@ namespace CryptoNotes.Server.Controllers
             _config = config;
         }
 
-        private bool IsLocalhost()
+        /// <summary>
+        /// Checks whether the connecting IP is allowed to access the admin panel.
+        /// Localhost (127.0.0.1 / ::1) is always permitted.
+        /// Additional IPs can be allowlisted in appsettings.json under Admin:AllowedIPs.
+        /// CIDR notation is supported (e.g. "192.168.1.0/24").
+        /// </summary>
+        private bool IsAllowedIp()
         {
             var remote = HttpContext.Connection.RemoteIpAddress;
             if (remote == null) return false;
 
-            // Allow 127.0.0.1, ::1, and mapped IPv4 loopback
-            if (IPAddress.IsLoopback(remote)) return true;
-            if (remote.IsIPv4MappedToIPv6)
-                return IPAddress.IsLoopback(remote.MapToIPv4());
+            // Normalize IPv6-mapped IPv4
+            var checkIp = remote.IsIPv4MappedToIPv6 ? remote.MapToIPv4() : remote;
+
+            // Localhost is always allowed
+            if (IPAddress.IsLoopback(checkIp)) return true;
+
+            // Check configured allowlist
+            var allowedEntries = _config.GetSection("Admin:AllowedIPs").Get<string[]>();
+            if (allowedEntries == null || allowedEntries.Length == 0)
+                return false;
+
+            foreach (var entry in allowedEntries)
+            {
+                var trimmed = entry?.Trim();
+                if (string.IsNullOrEmpty(trimmed)) continue;
+
+                // CIDR notation (e.g. "10.0.0.0/8")
+                if (trimmed.Contains("/"))
+                {
+                    if (IsInCidr(checkIp, trimmed))
+                        return true;
+                }
+                else
+                {
+                    // Exact IP match
+                    if (IPAddress.TryParse(trimmed, out var allowed) && checkIp.Equals(allowed))
+                        return true;
+                }
+            }
 
             return false;
+        }
+
+        private static bool IsInCidr(IPAddress ip, string cidr)
+        {
+            var parts = cidr.Split('/');
+            if (parts.Length != 2) return false;
+            if (!IPAddress.TryParse(parts[0], out var network)) return false;
+            if (!int.TryParse(parts[1], out var prefixLen)) return false;
+
+            var networkBytes = network.GetAddressBytes();
+            var ipBytes = ip.GetAddressBytes();
+            if (networkBytes.Length != ipBytes.Length) return false;
+
+            int fullBytes = prefixLen / 8;
+            int remainingBits = prefixLen % 8;
+
+            for (int i = 0; i < fullBytes && i < networkBytes.Length; i++)
+            {
+                if (networkBytes[i] != ipBytes[i]) return false;
+            }
+
+            if (remainingBits > 0 && fullBytes < networkBytes.Length)
+            {
+                int mask = 0xFF << (8 - remainingBits);
+                if ((networkBytes[fullBytes] & mask) != (ipBytes[fullBytes] & mask))
+                    return false;
+            }
+
+            return true;
         }
 
         [HttpGet]
         [Produces("text/html")]
         public async Task<IActionResult> Index()
         {
-            if (!IsLocalhost())
-                return StatusCode(403, "Forbidden: Admin panel is only accessible from localhost.");
+            if (!IsAllowedIp())
+            {
+                var remote = HttpContext.Connection.RemoteIpAddress;
+                return StatusCode(403,
+                    $"Forbidden: Your IP ({remote}) is not in the admin allowlist.\n" +
+                    "Add your IP to Admin:AllowedIPs in appsettings.json to gain access.");
+            }
 
             var totalUsers = await _db.Users.CountAsync();
             var totalMessages = await _db.Messages.CountAsync();
@@ -155,7 +221,7 @@ namespace CryptoNotes.Server.Controllers
 | (__| '_| || | '_ \  _/ _ \| .` / _ \  _/ -_|_-&lt;
  \___|_|  \_, | .__/\__\___/|_|\_\___/\__\___/__/
           |__/|_|</pre>
-        <div class='sub'>*** ADMIN CONSOLE *** | localhost only | <a class='refresh' href='/admin'>/refresh</a></div>
+        <div class='sub'>*** ADMIN CONSOLE *** | IP allowlisted | <a class='refresh' href='/admin'>/refresh</a></div>
     </div>
 
     <div class='section'>
@@ -229,7 +295,7 @@ namespace CryptoNotes.Server.Controllers
         {(totalUsers == 0 ? "<div style='color:#1a8c1a;padding:8px'>*** No users registered yet.</div>" : "")}
     </div>
 
-    <div class='warn'>*** WARNING: This admin panel has no authentication. Only accessible via localhost (127.0.0.1 / ::1).</div>
+    <div class='warn'>*** WARNING: This admin panel has no authentication. Access is restricted to localhost and IPs listed in Admin:AllowedIPs.</div>
 
     <div class='footer'>
         *** CryptoNotes Server Admin | E2E Encrypted Messaging Relay | All message content is PGP-encrypted ciphertext
