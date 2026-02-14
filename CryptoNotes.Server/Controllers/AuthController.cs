@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -7,6 +8,7 @@ using CryptoNotes.Server.Data;
 using CryptoNotes.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace CryptoNotes.Server.Controllers
 {
@@ -15,32 +17,56 @@ namespace CryptoNotes.Server.Controllers
     public class AuthController : ControllerBase
     {
         private readonly ServerDbContext _db;
+        private static IConfiguration _config;
 
-        public AuthController(ServerDbContext db)
+        // In-memory rate limiting: tracks login attempts per IP
+        private static readonly ConcurrentDictionary<string, RateLimitEntry> _loginAttempts
+            = new ConcurrentDictionary<string, RateLimitEntry>();
+
+        public AuthController(ServerDbContext db, IConfiguration config)
         {
             _db = db;
+            _config = config;
         }
 
-        /// <summary>
-        /// Register a new user with their PGP public key.
-        /// The server stores the public key so other users can discover it for E2E encryption.
-        /// </summary>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Rate limit registration
+            if (IsRateLimited())
+                return StatusCode(429, new { error = "Too many attempts. Try again later." });
+
+            // Validate password strength
+            int minPwdLen = _config.GetValue<int>("Security:MinPasswordLength", 8);
+            if (string.IsNullOrEmpty(request.Password) || request.Password.Length < minPwdLen)
+                return BadRequest(new { error = $"Password must be at least {minPwdLen} characters" });
+
+            // Validate username format
+            if (!IsValidUsername(request.Username))
+                return BadRequest(new { error = "Username must be 3-50 alphanumeric characters, hyphens, or underscores" });
+
+            // Validate public key looks like a PGP key
+            if (string.IsNullOrWhiteSpace(request.PublicKey) ||
+                !request.PublicKey.Contains("BEGIN PGP PUBLIC KEY"))
+                return BadRequest(new { error = "Invalid PGP public key format" });
+
             var existing = await _db.Users
                 .FirstOrDefaultAsync(u => u.Username == request.Username);
 
             if (existing != null)
+            {
+                // Prevent username enumeration via timing: always hash a password
+                BCrypt.Net.BCrypt.HashPassword("dummy-password-for-timing");
                 return Conflict(new { error = "Username already taken" });
+            }
 
             var user = new User
             {
                 Username = request.Username,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, 12),
                 PublicKey = request.PublicKey,
                 CreatedAt = DateTime.UtcNow,
                 LastSeen = DateTime.UtcNow
@@ -57,19 +83,29 @@ namespace CryptoNotes.Server.Controllers
             });
         }
 
-        /// <summary>
-        /// Log in with username and password to obtain an auth token.
-        /// </summary>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Rate limit login attempts
+            if (IsRateLimited())
+                return StatusCode(429, new { error = "Too many login attempts. Try again later." });
+
+            RecordAttempt();
+
             var user = await _db.Users
                 .FirstOrDefaultAsync(u => u.Username == request.Username);
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            if (user == null)
+            {
+                // Prevent username enumeration: always verify a hash
+                BCrypt.Net.BCrypt.Verify("dummy", BCrypt.Net.BCrypt.HashPassword("dummy"));
+                return Unauthorized(new { error = "Invalid username or password" });
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
                 return Unauthorized(new { error = "Invalid username or password" });
 
             user.LastSeen = DateTime.UtcNow;
@@ -83,15 +119,11 @@ namespace CryptoNotes.Server.Controllers
             });
         }
 
-        /// <summary>
-        /// Generate a simple HMAC-based token: username:timestamp:signature
-        /// In production, use JWT with proper key management.
-        /// </summary>
-        private static string GenerateToken(string username)
+        private string GenerateToken(string username)
         {
             var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
             var payload = $"{username}:{timestamp}";
-            using (var hmac = new HMACSHA256(TokenKey))
+            using (var hmac = new HMACSHA256(GetTokenKey()))
             {
                 var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
                 var signature = Convert.ToBase64String(hash);
@@ -100,14 +132,15 @@ namespace CryptoNotes.Server.Controllers
             }
         }
 
-        // Shared key for token signing. In production, load from secure config.
-        internal static readonly byte[] TokenKey = Encoding.UTF8.GetBytes(
-            "CryptoNotes-Server-Secret-Key-Change-In-Production-2024!");
+        private static byte[] GetTokenKey()
+        {
+            var key = _config?.GetValue<string>("Security:TokenSigningKey");
+            if (string.IsNullOrEmpty(key))
+                throw new InvalidOperationException(
+                    "Security:TokenSigningKey is not configured. Set it in appsettings.json.");
+            return Encoding.UTF8.GetBytes(key);
+        }
 
-        /// <summary>
-        /// Validates a token and returns the username, or null if invalid.
-        /// Tokens expire after 30 days.
-        /// </summary>
         internal static string ValidateToken(string token)
         {
             try
@@ -120,22 +153,29 @@ namespace CryptoNotes.Server.Controllers
                 var timestamp = parts[1];
                 var signature = parts[2];
 
-                // Check expiry (30 days)
+                // Check expiry (configurable, default 24 hours)
+                int expiryHours = _config?.GetValue<int>("Security:TokenExpiryHours", 24) ?? 24;
                 if (long.TryParse(timestamp, out var ts))
                 {
                     var issued = DateTimeOffset.FromUnixTimeSeconds(ts);
-                    if (DateTimeOffset.UtcNow - issued > TimeSpan.FromDays(30))
+                    if (DateTimeOffset.UtcNow - issued > TimeSpan.FromHours(expiryHours))
                         return null;
                 }
                 else return null;
 
-                // Verify signature
+                // Constant-time signature verification
                 var payload = $"{username}:{timestamp}";
-                using (var hmac = new HMACSHA256(TokenKey))
+                using (var hmac = new HMACSHA256(GetTokenKey()))
                 {
                     var expectedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
                     var expectedSig = Convert.ToBase64String(expectedHash);
-                    if (signature != expectedSig) return null;
+
+                    // Constant-time comparison
+                    if (expectedSig.Length != signature.Length) return null;
+                    int diff = 0;
+                    for (int i = 0; i < expectedSig.Length; i++)
+                        diff |= expectedSig[i] ^ signature[i];
+                    if (diff != 0) return null;
                 }
 
                 return username;
@@ -145,5 +185,73 @@ namespace CryptoNotes.Server.Controllers
                 return null;
             }
         }
+
+        #region Rate Limiting
+
+        private bool IsRateLimited()
+        {
+            var ip = GetClientIp();
+            int maxAttempts = _config?.GetValue<int>("Security:MaxLoginAttemptsPerMinute", 5) ?? 5;
+
+            if (_loginAttempts.TryGetValue(ip, out var entry))
+            {
+                // Clean up old entries
+                if (DateTime.UtcNow - entry.WindowStart > TimeSpan.FromMinutes(1))
+                {
+                    entry.Count = 0;
+                    entry.WindowStart = DateTime.UtcNow;
+                    return false;
+                }
+
+                return entry.Count >= maxAttempts;
+            }
+
+            return false;
+        }
+
+        private void RecordAttempt()
+        {
+            var ip = GetClientIp();
+            _loginAttempts.AddOrUpdate(ip,
+                _ => new RateLimitEntry { Count = 1, WindowStart = DateTime.UtcNow },
+                (_, existing) =>
+                {
+                    if (DateTime.UtcNow - existing.WindowStart > TimeSpan.FromMinutes(1))
+                    {
+                        existing.Count = 1;
+                        existing.WindowStart = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        existing.Count++;
+                    }
+                    return existing;
+                });
+        }
+
+        private string GetClientIp()
+        {
+            return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        }
+
+        private static bool IsValidUsername(string username)
+        {
+            if (string.IsNullOrEmpty(username) || username.Length < 3 || username.Length > 50)
+                return false;
+            foreach (var c in username)
+            {
+                if (!char.IsLetterOrDigit(c) && c != '-' && c != '_')
+                    return false;
+            }
+            return true;
+        }
+
+        private class RateLimitEntry
+        {
+            public int Count { get; set; }
+            public DateTime WindowStart { get; set; }
+        }
+
+        #endregion
     }
 }

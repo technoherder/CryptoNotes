@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using CryptoNotes.Models;
 using CryptoNotes.ViewModels;
 using PgpCore;
@@ -23,13 +24,10 @@ namespace CryptoNotes.Views
       publicPicker.SetBinding(Picker.ItemsSourceProperty, "Item");
       publicPicker.ItemDisplayBinding = new Binding("Text");
       publicPicker.ItemsSource = App.Database.GetItemsAsync().Result;
-
-
     }
 
     void OnToggled(object sender, ToggledEventArgs e)
     {
-      // Perform an action after examining e.Value
       if (e.Value)
       {
         privatePicker.IsVisible = true;
@@ -44,76 +42,49 @@ namespace CryptoNotes.Views
       }
     }
 
-
     async void EncryptMessageClicked(System.Object sender, System.EventArgs e)
     {
       encryptBtn.Opacity = 0;
       Item publicKey = this.publicPicker.SelectedItem as Item;
-      
+
+      if (publicKey == null)
+      {
+        await DisplayAlert("Error", "Please select a public key", "OK");
+        encryptBtn.Opacity = 1;
+        return;
+      }
+
+      // Use unique file names to prevent collisions and aid cleanup
+      var id = Guid.NewGuid().ToString("N");
+      string publicFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), $"enc_pub_{id}.asc");
+      string encryptedMessage = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), $"enc_out_{id}.pgp");
+      string messageContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), $"enc_msg_{id}.txt");
+      string privateFile = null;
+
       try
       {
-        string publicFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "public.asc");
-        string encryptedMessage = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "encryptedAndSigned.pgp");
-        string messageContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "content.txt");
-
-        using (var streamWriter = new StreamWriter(publicFile, true))
-          streamWriter.WriteLine(publicKey.PublicKey);
-
-        using (var streamWriter = new StreamWriter(messageContent, true))
-          streamWriter.WriteLine(MessageTxt.Text);
-
+        File.WriteAllText(publicFile, publicKey.PublicKey);
+        File.WriteAllText(messageContent, MessageTxt.Text);
 
         using (PGP pgp = new PGP())
         {
-          // Encrypt file and sign
-
           if (SignedF.IsToggled)
           {
             Item privateKey = privatePicker.SelectedItem as Item;
-            if (string.IsNullOrEmpty(privateKey.EmailKey))
-              privateKey.EmailKey = "";
-            if (string.IsNullOrEmpty(privateKey.PasswordKey))
-              privateKey.PasswordKey = "";
-            string privateFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "private.asc");
-            using (var streamWriter = new StreamWriter(privateFile, true))
-              streamWriter.WriteLine(privateKey.PrivateKey);
-            await pgp.EncryptFileAndSignAsync(messageContent, encryptedMessage, publicFile, privateFile, PwdTxt.Text, true, true);
+            if (privateKey == null)
+            {
+              await DisplayAlert("Error", "Please select a private key for signing", "OK");
+              return;
+            }
 
-            using (StreamWriter streamWriter = new StreamWriter(privateFile, true))
-              streamWriter.WriteLine(DateTime.UtcNow);
+            privateFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), $"enc_priv_{id}.asc");
+            File.WriteAllText(privateFile, privateKey.PrivateKey);
+            await pgp.EncryptFileAndSignAsync(messageContent, encryptedMessage, publicFile, privateFile, PwdTxt.Text, true, true);
           }
           else
+          {
             await pgp.EncryptFileAsync(messageContent, encryptedMessage, publicFile, true, true);
-
-
-          /*
-           * 
-           * byte[] byteArray = Encoding.ASCII.GetBytes(privateKey.PrivateKey);
-          Stream privateKeyStream = new MemoryStream(byteArray, true);
-
-
-          byte[] publicByteArray = Encoding.ASCII.GetBytes(publicKey.PublicKey);
-          Stream publicKeyStream = new MemoryStream(publicByteArray, true);
-
-          byte[] inputByteArray = Encoding.ASCII.GetBytes(MessageTxt.Text);
-          Stream inputFileStream = new MemoryStream(inputByteArray, true);
-
-          System.IO.Stream outputFileStream = new MemoryStream();
-
-
-
-          // Encrypt and sign stream
-          await pgp.EncryptStreamAndSignAsync(inputFileStream, outputFileStream, publicKeyStream
-                                            , privateKeyStream, privateKey.PasswordKey, true, true);
-
-          // Encrypt and sign stream
-          using (FileStream inputFileStream = new FileStream(@"C:\TEMP\Content\content.txt", FileMode.Open))
-          using (Stream outputFileStream = File.Create(@"C:\TEMP\Content\encryptedAndSigned.pgp"))
-          using (Stream publicKeyStream = new FileStream(@"C:\TEMP\Keys\public.asc", FileMode.Open))
-          using (Stream privateKeyStream = new FileStream(@"C:\TEMP\Keys\private.asc", FileMode.Open))
-            await pgp.EncryptStreamAndSignAsync(inputFileStream, outputFileStream, publicKeyStream, privateKeyStream, "password", true, true);
-          */
-
+          }
         }
 
         await Share.RequestAsync(new ShareTextRequest
@@ -122,38 +93,48 @@ namespace CryptoNotes.Views
           Title = "PGP Message",
           Subject = "PGP Message"
         });
-
-        using (StreamWriter streamWriter = new StreamWriter(messageContent, true))
-          streamWriter.WriteLine(DateTime.UtcNow);
-
-        using (StreamWriter streamWriter = new StreamWriter(encryptedMessage, true))
-          streamWriter.WriteLine(DateTime.UtcNow);
-
-        using (StreamWriter streamWriter = new StreamWriter(publicFile, true))
-          streamWriter.WriteLine(DateTime.UtcNow);
-
-
-        //await Sms.ComposeAsync(message);
-      }
-      catch (FeatureNotSupportedException ex)
-      {
-        // Sms is not supported on this device.
       }
       catch (Exception ex)
       {
-        // Other error has occurred. b
+        await DisplayAlert("Encryption Error", "Failed to encrypt message. Check your keys and password.", "OK");
+      }
+      finally
+      {
+        // Securely delete all temp files
+        SecureDeleteFile(publicFile);
+        SecureDeleteFile(encryptedMessage);
+        SecureDeleteFile(messageContent);
+        if (privateFile != null) SecureDeleteFile(privateFile);
       }
 
       MessageTxt.Text = string.Empty;
+      PwdTxt.Text = string.Empty;
       privatePicker.SelectedIndex = -1;
       publicPicker.SelectedIndex = -1;
       encryptBtn.Opacity = 1;
-
     }
 
-    
-
-
-
+    private static void SecureDeleteFile(string path)
+    {
+      try
+      {
+        if (!File.Exists(path)) return;
+        var length = new FileInfo(path).Length;
+        if (length > 0)
+        {
+          var buffer = new byte[length];
+          File.WriteAllBytes(path, buffer);
+          using (var rng = RandomNumberGenerator.Create())
+            rng.GetBytes(buffer);
+          File.WriteAllBytes(path, buffer);
+          Array.Clear(buffer, 0, buffer.Length);
+        }
+        File.Delete(path);
+      }
+      catch
+      {
+        try { File.Delete(path); } catch { }
+      }
+    }
   }
 }

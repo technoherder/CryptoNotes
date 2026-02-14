@@ -139,6 +139,11 @@ namespace CryptoNotes.Views
     {
       var text = MessageInput.Text?.Trim();
       if (string.IsNullOrEmpty(text)) return;
+      if (text.Length > 10000)
+      {
+        await DisplayAlert("Error", "Message too long (max 10,000 characters)", "OK");
+        return;
+      }
       if (string.IsNullOrEmpty(_recipientPublicKey))
       {
         await DisplayAlert("Error", "Recipient's public key not available", "OK");

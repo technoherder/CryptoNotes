@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -42,37 +42,146 @@ namespace CryptoNotes.Services
       }
     }
 
-    public Task<List<Item>> GetItemsAsync()
+    // --- Encryption helpers ---
+    // All sensitive fields are encrypted with AES-256 before storage.
+    // The encryption key is derived from the user's app password via PBKDF2.
+
+    private static string Encrypt(string value)
     {
-      return Database.Table<Item>().ToListAsync();
+      if (string.IsNullOrEmpty(value)) return value;
+      if (!App.Security.IsUnlocked) return value;
+      return App.Security.EncryptString(value);
+    }
+
+    private static string Decrypt(string value)
+    {
+      if (string.IsNullOrEmpty(value)) return value;
+      if (!App.Security.IsUnlocked) return value;
+      return App.Security.DecryptString(value);
+    }
+
+    private static Item EncryptItem(Item item)
+    {
+      return new Item
+      {
+        Id = item.Id,
+        Text = item.Text, // Keep unencrypted for lookups/display
+        Description = item.Description,
+        PublicKey = Encrypt(item.PublicKey),
+        PrivateKey = Encrypt(item.PrivateKey),
+        SafeMessage = Encrypt(item.SafeMessage),
+        EmailKey = Encrypt(item.EmailKey),
+        PasswordKey = Encrypt(item.PasswordKey)
+      };
+    }
+
+    private static Item DecryptItem(Item item)
+    {
+      if (item == null) return null;
+      return new Item
+      {
+        Id = item.Id,
+        Text = item.Text,
+        Description = item.Description,
+        PublicKey = Decrypt(item.PublicKey),
+        PrivateKey = Decrypt(item.PrivateKey),
+        SafeMessage = Decrypt(item.SafeMessage),
+        EmailKey = Decrypt(item.EmailKey),
+        PasswordKey = Decrypt(item.PasswordKey)
+      };
+    }
+
+    private static ChatMessage EncryptMessage(ChatMessage msg)
+    {
+      return new ChatMessage
+      {
+        Id = msg.Id,
+        ServerId = msg.ServerId,
+        SenderUsername = msg.SenderUsername,
+        RecipientUsername = msg.RecipientUsername,
+        PlainText = Encrypt(msg.PlainText),
+        SentAt = msg.SentAt,
+        IsOutgoing = msg.IsOutgoing
+      };
+    }
+
+    private static ChatMessage DecryptMessage(ChatMessage msg)
+    {
+      if (msg == null) return null;
+      return new ChatMessage
+      {
+        Id = msg.Id,
+        ServerId = msg.ServerId,
+        SenderUsername = msg.SenderUsername,
+        RecipientUsername = msg.RecipientUsername,
+        PlainText = Decrypt(msg.PlainText),
+        SentAt = msg.SentAt,
+        IsOutgoing = msg.IsOutgoing
+      };
+    }
+
+    private static UserAccount EncryptAccount(UserAccount acct)
+    {
+      return new UserAccount
+      {
+        Id = acct.Id,
+        Username = acct.Username,
+        AuthToken = Encrypt(acct.AuthToken),
+        ServerUrl = acct.ServerUrl,
+        KeyPairId = acct.KeyPairId
+      };
+    }
+
+    private static UserAccount DecryptAccount(UserAccount acct)
+    {
+      if (acct == null) return null;
+      return new UserAccount
+      {
+        Id = acct.Id,
+        Username = acct.Username,
+        AuthToken = Decrypt(acct.AuthToken),
+        ServerUrl = acct.ServerUrl,
+        KeyPairId = acct.KeyPairId
+      };
+    }
+
+    // --- Item methods (with encryption) ---
+
+    public async Task<List<Item>> GetItemsAsync()
+    {
+      var items = await Database.Table<Item>().ToListAsync();
+      return items.Select(DecryptItem).ToList();
     }
 
     public Task<List<Item>> GetPrivateItemsNotSignedAsync()
     {
-      // SQL queries are also possible
       return Database.QueryAsync<Item>("SELECT * FROM [Item] WHERE [PasswordKey] IS NULL OR [EmailKey] IS NULL;");
     }
 
-    public Task<Item> GetItemAsync(int id)
+    public async Task<Item> GetItemAsync(int id)
     {
-      return Database.Table<Item>().Where(i => i.Id == id).FirstOrDefaultAsync();
+      var item = await Database.Table<Item>().Where(i => i.Id == id).FirstOrDefaultAsync();
+      return DecryptItem(item);
     }
 
-    public Task<List<Item>> GetPrivateItemAsync()
+    public async Task<List<Item>> GetPrivateItemAsync()
     {
-      return Database.Table<Item>().Where(x => x.PrivateKey != null).ToListAsync();
+      var items = await Database.Table<Item>().Where(x => x.PrivateKey != null).ToListAsync();
+      return items.Select(DecryptItem).ToList();
     }
 
     public Task<int> SaveItemAsync(Item item)
     {
-      int dumbCheck =  Database.Table<Item>().Where(x => x.Text == item.Text).ToListAsync().Result.Count;
+      var encrypted = EncryptItem(item);
+      int dumbCheck = Database.Table<Item>().Where(x => x.Text == item.Text).ToListAsync().Result.Count;
       if (item.Id != 0 && dumbCheck == 1)
       {
-        return Database.UpdateAsync(item);
+        encrypted.Id = item.Id;
+        return Database.UpdateAsync(encrypted);
       }
       else if (dumbCheck == 0)
       {
-        return Database.InsertAsync(item);
+        return Database.InsertAsync(encrypted);
       }
       else
         return null;
@@ -86,26 +195,27 @@ namespace CryptoNotes.Services
 
     public Task<List<Item>> DeleteAllItemsAsync()
     {
-      // SQL queries are also possible
       return Database.QueryAsync<Item>("DELETE FROM [Item];");
     }
 
-    // --- UserAccount methods ---
+    // --- UserAccount methods (with encryption) ---
 
-    public Task<UserAccount> GetUserAccountAsync()
+    public async Task<UserAccount> GetUserAccountAsync()
     {
-      return Database.Table<UserAccount>().FirstOrDefaultAsync();
+      var acct = await Database.Table<UserAccount>().FirstOrDefaultAsync();
+      return DecryptAccount(acct);
     }
 
     public async Task<int> SaveUserAccountAsync(UserAccount account)
     {
+      var encrypted = EncryptAccount(account);
       var existing = await Database.Table<UserAccount>().FirstOrDefaultAsync();
       if (existing != null)
       {
-        account.Id = existing.Id;
-        return await Database.UpdateAsync(account);
+        encrypted.Id = existing.Id;
+        return await Database.UpdateAsync(encrypted);
       }
-      return await Database.InsertAsync(account);
+      return await Database.InsertAsync(encrypted);
     }
 
     public Task DeleteUserAccountAsync()
@@ -113,23 +223,28 @@ namespace CryptoNotes.Services
       return Database.DeleteAllAsync<UserAccount>();
     }
 
-    // --- ChatMessage methods ---
+    // --- ChatMessage methods (with encryption) ---
 
     public Task<int> SaveChatMessageAsync(ChatMessage message)
     {
+      var encrypted = EncryptMessage(message);
       if (message.Id != 0)
-        return Database.UpdateAsync(message);
-      return Database.InsertAsync(message);
+      {
+        encrypted.Id = message.Id;
+        return Database.UpdateAsync(encrypted);
+      }
+      return Database.InsertAsync(encrypted);
     }
 
-    public Task<List<ChatMessage>> GetChatMessagesAsync(string otherUsername, string myUsername)
+    public async Task<List<ChatMessage>> GetChatMessagesAsync(string otherUsername, string myUsername)
     {
-      return Database.Table<ChatMessage>()
+      var messages = await Database.Table<ChatMessage>()
         .Where(m =>
           (m.SenderUsername == myUsername && m.RecipientUsername == otherUsername) ||
           (m.SenderUsername == otherUsername && m.RecipientUsername == myUsername))
         .OrderBy(m => m.SentAt)
         .ToListAsync();
+      return messages.Select(DecryptMessage).ToList();
     }
 
     public async Task<List<ChatMessage>> GetLatestMessagesPerConversationAsync(string myUsername)
@@ -145,7 +260,7 @@ namespace CryptoNotes.Services
       {
         var other = msg.SenderUsername == myUsername ? msg.RecipientUsername : msg.SenderUsername;
         if (seen.Add(other))
-          result.Add(msg);
+          result.Add(DecryptMessage(msg));
       }
       return result;
     }

@@ -34,6 +34,17 @@ namespace CryptoNotes.Server.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Validate message size
+            if (string.IsNullOrEmpty(request.EncryptedContent))
+                return BadRequest(new { error = "Message content is required" });
+
+            if (request.EncryptedContent.Length > 65536)
+                return BadRequest(new { error = "Message too large (max 64KB)" });
+
+            // Prevent sending to self
+            if (request.RecipientUsername == senderUsername)
+                return BadRequest(new { error = "Cannot send messages to yourself" });
+
             // Verify recipient exists
             var recipient = await _db.Users
                 .FirstOrDefaultAsync(u => u.Username == request.RecipientUsername);
@@ -102,6 +113,11 @@ namespace CryptoNotes.Server.Controllers
             var username = GetAuthenticatedUser();
             if (username == null)
                 return Unauthorized(new { error = "Invalid or missing token" });
+
+            // Clamp page size to prevent abuse
+            if (pageSize > 100) pageSize = 100;
+            if (pageSize < 1) pageSize = 1;
+            if (page < 0) page = 0;
 
             var messages = await _db.Messages
                 .Where(m =>
