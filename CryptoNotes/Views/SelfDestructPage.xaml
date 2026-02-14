@@ -1,22 +1,35 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="CryptoNotes.Views.SelfDestructPage">
     <ContentPage.Content>
-        <ScrollView BackgroundColor="Black" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-                <StackLayout Spacing="20" Padding="15">
+        <ScrollView BackgroundColor="#0a0a0a" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <StackLayout Spacing="10" Padding="15" VerticalOptions="CenterAndExpand">
 
-                     <Label>
-    <Label.FormattedText>
-        <FormattedString>
-            <Span Text="&#xf6e0;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#CC0000" />
-            <Span TextColor="#CC0000" FontFamily="{StaticResource ConsoleCode}" Text="SELF DESTRUCT" FontSize="45" />
-        </FormattedString>
-    </Label.FormattedText>
-</Label>
+                <Label TextColor="#ff3333" FontFamily="{StaticResource ConsoleCode}" FontSize="12"
+                    HorizontalTextAlignment="Center" LineBreakMode="NoWrap"
+                    Text=" _  _____ _     _     &#10;| |/ /_ _| |   | |    &#10;| ' / | || |   | |    &#10;| . \ | || |___| |___ &#10;|_|\_\___|_____|_____|" />
 
+                <BoxView HeightRequest="1" BackgroundColor="#ff3333" Margin="0,5" />
 
-            <Button Margin="0,10,0,0" Text="DELETE ALL" Command="{Binding OpenWebCommand}" x:Name="DeleteBtn"
-                    BackgroundColor="#ff6600" TextColor="White" Clicked="SelfDestructClicked" />
+                <Label TextColor="#ff3333" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                    HorizontalTextAlignment="Center"
+                    Text="*** /KILL - SELF DESTRUCT ***" />
+
+                <Label TextColor="#cccccc" FontFamily="{StaticResource ConsoleCode}" FontSize="13"
+                    HorizontalTextAlignment="Center"
+                    Text="This will permanently destroy:&#10;- All PGP keys (public and private)&#10;- All messages and conversations&#10;- Your account credentials&#10;- All encrypted local data" />
+
+                <Label TextColor="#ff3333" FontFamily="{StaticResource ConsoleCode}" FontSize="12"
+                    HorizontalTextAlignment="Center"
+                    Text="!!! THIS CANNOT BE UNDONE !!!" />
+
+                <Button Margin="0,15,0,0" Text="/KILL - DESTROY ALL DATA"
+                    x:Name="DeleteBtn"
+                    FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                    BackgroundColor="#111111" TextColor="#ff3333"
+                    BorderColor="#ff3333" BorderWidth="2"
+                    Clicked="SelfDestructClicked" />
+
             </StackLayout>
         </ScrollView>
     </ContentPage.Content>

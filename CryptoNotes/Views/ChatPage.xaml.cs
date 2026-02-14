@@ -20,7 +20,7 @@ namespace CryptoNotes.Views
     {
       InitializeComponent();
       _otherUsername = otherUsername;
-      Title = $"{otherUsername}";
+      Title = $"#{otherUsername}";
       MessagesView.ItemsSource = _messages;
     }
 
@@ -238,15 +238,13 @@ namespace CryptoNotes.Views
     private ChatMessageDisplay ToDisplay(ChatMessage msg)
     {
       bool isOutgoing = msg.IsOutgoing;
+      var nick = isOutgoing ? _myUsername ?? "me" : msg.SenderUsername;
       return new ChatMessageDisplay
       {
         PlainText = msg.PlainText,
-        SenderLabel = isOutgoing ? "You" : msg.SenderUsername,
-        SenderColor = isOutgoing ? Color.FromHex("#20C20E") : Color.FromHex("#9f00ff"),
-        BubbleColor = isOutgoing ? Color.FromHex("#00497a") : Color.FromHex("#2d1b4e"),
-        Alignment = isOutgoing ? LayoutOptions.End : LayoutOptions.Start,
-        BubbleMargin = isOutgoing ? new Thickness(50, 0, 0, 0) : new Thickness(0, 0, 50, 0),
-        TimeStamp = msg.SentAt.ToLocalTime().ToString("HH:mm")
+        SenderLabel = $"<{nick}>",
+        SenderColor = isOutgoing ? Color.FromHex("#33ff33") : Color.FromHex("#00e5ff"),
+        TimeStamp = msg.SentAt.ToLocalTime().ToString("[HH:mm]")
       };
     }
 
@@ -264,9 +262,6 @@ namespace CryptoNotes.Views
     public string PlainText { get; set; }
     public string SenderLabel { get; set; }
     public Color SenderColor { get; set; }
-    public Color BubbleColor { get; set; }
-    public LayoutOptions Alignment { get; set; }
-    public Thickness BubbleMargin { get; set; }
     public string TimeStamp { get; set; }
   }
 }

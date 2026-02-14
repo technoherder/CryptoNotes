@@ -1,55 +1,39 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-<ContentPage BackgroundColor="Black" xmlns="http://xamarin.com/schemas/2014/forms"
+<?xml version="1.0" encoding="UTF-8"?>
+<ContentPage BackgroundColor="#0a0a0a" xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="CryptoNotes.Views.NewPublicKeyPage" Title="New Public Key">
+             x:Class="CryptoNotes.Views.NewPublicKeyPage" Title="/IMPORT">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Cancel" Clicked="Cancel_Clicked" />
-        <ToolbarItem Text="Save" Clicked="Save_Clicked" />
+        <ToolbarItem Text="/cancel" Clicked="Cancel_Clicked" />
+        <ToolbarItem Text="/save" Clicked="Save_Clicked" />
     </ContentPage.ToolbarItems>
     <ContentPage.Content>
-                        <ScrollView HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-        <StackLayout Spacing="20" Padding="15">
-            <Label>
-    <Label.FormattedText>
-        <FormattedString>
-            <Span Text="&#xf120;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#9f00ff" />
-            <Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Title:" FontSize="35" />
-        </FormattedString>
-    </Label.FormattedText>
-</Label>
-            <Entry TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.Text}"
-                   BackgroundColor="#141d2b" FontSize="55" />
-            <Label>
-    <Label.FormattedText>
-        <FormattedString>
-            <Span Text="&#xf4a6;" FontFamily="FontAwesomeSolid" FontSize="37" TextColor="#9f00ff" />
-            <Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Description:" FontSize="45" />
-        </FormattedString>
-    </Label.FormattedText>
-</Label>
-            <Editor TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.Description}"
-                    BackgroundColor="#141d2b" FontSize="55" Margin="0" />
-            <Label>
-    <Label.FormattedText>
-        <FormattedString>
-            <Span Text="&#xf1fa;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#9f00ff" />
-            <Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Email:" FontSize="45"  />
-        </FormattedString>
-    </Label.FormattedText>
-</Label>
-            <Editor TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.EmailKey}"
-                    FontSize="50" BackgroundColor="#141d2b"  />
-            <Label>
-    <Label.FormattedText>
-        <FormattedString>
-            <Span Text="&#xf573;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#9f00ff" />
-            <Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Public Key:" FontSize="45" />
-        </FormattedString>
-    </Label.FormattedText>
-</Label>
-            <Editor TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.PublicKey}"
-                    FontSize="25" BackgroundColor="#141d2b" />
-        </StackLayout>
-                            </ScrollView>
+        <ScrollView HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <StackLayout Spacing="10" Padding="15">
+
+                <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                    Text="*** Import trusted public key:" />
+                <BoxView HeightRequest="1" BackgroundColor="#1a8c1a" />
+
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="TITLE:" />
+                <Entry TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.Text}"
+                    BackgroundColor="#111111" FontSize="16" PlaceholderColor="#1a8c1a" Placeholder="contact_name" />
+
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="DESCRIPTION:" />
+                <Editor TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.Description}"
+                    BackgroundColor="#111111" FontSize="14" PlaceholderColor="#1a8c1a" />
+
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="EMAIL:" />
+                <Editor TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.EmailKey}"
+                    FontSize="14" BackgroundColor="#111111" PlaceholderColor="#1a8c1a" />
+
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="PUBLIC KEY:" />
+                <Editor TextColor="#00e5ff" FontFamily="{StaticResource ConsoleCode}" Text="{Binding Item.PublicKey}"
+                    FontSize="11" BackgroundColor="#111111" HeightRequest="150" PlaceholderColor="#1a8c1a" />
+            </StackLayout>
+        </ScrollView>
     </ContentPage.Content>
 </ContentPage>

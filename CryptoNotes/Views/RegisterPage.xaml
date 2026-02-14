@@ -2,93 +2,82 @@
 <ContentPage
     xmlns="http://xamarin.com/schemas/2014/forms"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    x:Class="CryptoNotes.Views.RegisterPage" Title="Account">
+    x:Class="CryptoNotes.Views.RegisterPage" Title="/NICK">
     <ContentPage.Content>
-        <ScrollView BackgroundColor="Black" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-            <StackLayout Spacing="15" Padding="15">
+        <ScrollView BackgroundColor="#0a0a0a" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <StackLayout Spacing="10" Padding="12">
 
-                <Label Text="&#xf234;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#9f00ff" />
-                <Label TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Secure Messaging" FontSize="40" />
+                <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                    Text="*** Server Registration ***" />
+
+                <BoxView HeightRequest="1" BackgroundColor="#1a8c1a" />
 
                 <!-- Status indicator -->
-                <Frame x:Name="StatusFrame" BackgroundColor="#141d2b" CornerRadius="5" Padding="10" IsVisible="false">
-                    <Label x:Name="StatusLabel" TextColor="#0086ff" FontFamily="{StaticResource ConsoleCode}" FontSize="16" />
+                <Frame x:Name="StatusFrame" BackgroundColor="#111111" CornerRadius="0" Padding="10"
+                    IsVisible="false" BorderColor="#1a8c1a">
+                    <Label x:Name="StatusLabel" TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14" />
                 </Frame>
 
                 <!-- Already logged in view -->
-                <StackLayout x:Name="LoggedInView" IsVisible="false" Spacing="10">
-                    <Label TextColor="#0086ff" FontFamily="{StaticResource ConsoleCode}" FontSize="20">
+                <StackLayout x:Name="LoggedInView" IsVisible="false" Spacing="8">
+                    <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="*** You are connected" />
+                    <Label FontFamily="{StaticResource ConsoleCode}" FontSize="16">
                         <Label.FormattedText>
                             <FormattedString>
-                                <Span Text="&#xf058;" FontFamily="FontAwesomeSolid" FontSize="20" TextColor="#20C20E" />
-                                <Span Text=" Connected as: " />
+                                <Span Text="NICK: " ForegroundColor="#1a8c1a" />
                             </FormattedString>
                         </Label.FormattedText>
                     </Label>
-                    <Label x:Name="UsernameDisplay" TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" FontSize="25" />
-                    <Label x:Name="ServerDisplay" TextColor="#0086ff" FontFamily="{StaticResource ConsoleCode}" FontSize="14" />
-                    <Button Text="Log Out" BackgroundColor="#9f00ff" TextColor="White" Clicked="LogoutClicked" />
+                    <Label x:Name="UsernameDisplay" TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="20" />
+                    <Label x:Name="ServerDisplay" TextColor="#555555" FontFamily="{StaticResource ConsoleCode}" FontSize="13" />
+                    <Button Text="/QUIT - Log Out"
+                        FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        BackgroundColor="#111111" TextColor="#ff3333"
+                        BorderColor="#ff3333" BorderWidth="1"
+                        Clicked="LogoutClicked" />
                 </StackLayout>
 
                 <!-- Registration / Login form -->
-                <StackLayout x:Name="AuthForm" Spacing="15">
-                    <Label>
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="&#xf0ac;" FontFamily="FontAwesomeSolid" FontSize="25" TextColor="#1ae3f3" />
-                                <Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text=" Server URL:" FontSize="30" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-                    <Entry x:Name="ServerUrlTxt" TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}"
-                        FontSize="20" BackgroundColor="#141d2b" PlaceholderColor="LightGray"
-                        Keyboard="Url" Placeholder="http://your-server:5000" />
+                <StackLayout x:Name="AuthForm" Spacing="10">
+                    <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="SERVER:" />
+                    <Entry x:Name="ServerUrlTxt" TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}"
+                        FontSize="16" BackgroundColor="#111111" PlaceholderColor="#1a8c1a"
+                        Keyboard="Url" Placeholder="irc.example.com:5000" />
 
-                    <Label>
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="&#xf007;" FontFamily="FontAwesomeSolid" FontSize="25" TextColor="#1ae3f3" />
-                                <Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text=" Username:" FontSize="30" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-                    <Entry x:Name="UsernameTxt" TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}"
-                        FontSize="25" BackgroundColor="#141d2b" PlaceholderColor="LightGray"
-                        Keyboard="Plain" Placeholder="Choose a username" />
+                    <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="NICK:" />
+                    <Entry x:Name="UsernameTxt" TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}"
+                        FontSize="18" BackgroundColor="#111111" PlaceholderColor="#1a8c1a"
+                        Keyboard="Plain" Placeholder="your_nick" />
 
-                    <Label>
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="&#xf30d;" FontFamily="FontAwesomeSolid" FontSize="25" TextColor="#1ae3f3" />
-                                <Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text=" Password:" FontSize="30" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-                    <Entry x:Name="PasswordTxt" TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}"
-                        FontSize="25" BackgroundColor="#141d2b" PlaceholderColor="LightGray"
-                        Keyboard="Plain" IsPassword="true" Placeholder="Min 6 characters" />
+                    <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="PASS:" />
+                    <Entry x:Name="PasswordTxt" TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}"
+                        FontSize="18" BackgroundColor="#111111" PlaceholderColor="#1a8c1a"
+                        Keyboard="Plain" IsPassword="true" Placeholder="********" />
 
-                    <Label>
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="&#xf084;" FontFamily="FontAwesomeSolid" FontSize="25" TextColor="#1ae3f3" />
-                                <Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text=" PGP Key Pair:" FontSize="30" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
+                    <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="PGP KEY:" />
                     <Picker x:Name="KeyPicker"
-                        Title="Select your key pair for messaging"
-                        TitleColor="Red" />
+                        Title="Select key pair"
+                        TitleColor="#1a8c1a" />
 
-                    <Button x:Name="RegisterBtn" Text="Register" Margin="0,10,0,0"
-                        BackgroundColor="#007fdf" TextColor="White" Clicked="RegisterClicked" />
+                    <Button x:Name="RegisterBtn" Text="/REGISTER"
+                        FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        BackgroundColor="#111111" TextColor="#33ff33"
+                        BorderColor="#1a8c1a" BorderWidth="1"
+                        Margin="0,8,0,0" Clicked="RegisterClicked" />
 
-                    <Label TextColor="#0086ff" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
-                        Text="Already have an account?" HorizontalTextAlignment="Center" />
+                    <Label TextColor="#555555" FontFamily="{StaticResource ConsoleCode}" FontSize="13"
+                        Text="*** Already registered? Identify below:" HorizontalTextAlignment="Center" />
 
-                    <Button x:Name="LoginBtn" Text="Log In"
-                        BackgroundColor="#141d2b" TextColor="#0086ff" Clicked="LoginClicked" />
-
+                    <Button x:Name="LoginBtn" Text="/IDENTIFY - Log In"
+                        FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        BackgroundColor="#111111" TextColor="#00e5ff"
+                        BorderColor="#00e5ff" BorderWidth="1"
+                        Clicked="LoginClicked" />
                 </StackLayout>
             </StackLayout>
         </ScrollView>

@@ -2,42 +2,50 @@
 <ContentPage
     xmlns="http://xamarin.com/schemas/2014/forms"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    x:Class="CryptoNotes.Views.ConversationsPage" Title="Messages">
+    x:Class="CryptoNotes.Views.ConversationsPage" Title="#channels">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="New" Clicked="NewConversationClicked" />
-        <ToolbarItem Text="Refresh" Clicked="RefreshClicked" />
+        <ToolbarItem Text="/join" Clicked="NewConversationClicked" />
+        <ToolbarItem Text="/refresh" Clicked="RefreshClicked" />
     </ContentPage.ToolbarItems>
     <ContentPage.Content>
-        <StackLayout BackgroundColor="Black">
+        <StackLayout BackgroundColor="#0a0a0a" Spacing="0">
 
             <!-- Not logged in warning -->
-            <Frame x:Name="NotLoggedInFrame" BackgroundColor="#141d2b" CornerRadius="5"
-                Padding="15" Margin="15" IsVisible="false">
-                <StackLayout Spacing="10">
-                    <Label TextColor="#ff4444" FontFamily="{StaticResource ConsoleCode}" FontSize="18"
-                        Text="Not connected to a server. Go to Account to register or log in." />
-                </StackLayout>
+            <Frame x:Name="NotLoggedInFrame" BackgroundColor="#111111" CornerRadius="0"
+                Padding="12" Margin="0" IsVisible="false" BorderColor="#ff3333">
+                <Label TextColor="#ff3333" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="*** ERROR: Not connected to server. Use /NICK to register or login." />
             </Frame>
 
             <!-- Search / New conversation -->
-            <Frame x:Name="SearchFrame" BackgroundColor="#141d2b" CornerRadius="5"
-                Padding="10" Margin="15,15,15,0" IsVisible="false">
-                <StackLayout Spacing="10">
-                    <Label TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" FontSize="18"
-                        Text="Find a user to message:" />
-                    <Entry x:Name="SearchEntry" TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}"
-                        FontSize="20" BackgroundColor="Black" PlaceholderColor="LightGray"
-                        Placeholder="Search username..." />
-                    <Button Text="Search" BackgroundColor="#007fdf" TextColor="White"
+            <Frame x:Name="SearchFrame" BackgroundColor="#111111" CornerRadius="0"
+                Padding="10" Margin="0" IsVisible="false" BorderColor="#1a8c1a">
+                <StackLayout Spacing="8">
+                    <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="/WHOIS - Find a user:" />
+                    <Entry x:Name="SearchEntry" TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}"
+                        FontSize="18" BackgroundColor="#0a0a0a" PlaceholderColor="#1a8c1a"
+                        Placeholder="username" />
+                    <Button Text="/SEARCH" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        BackgroundColor="#111111" TextColor="#33ff33"
+                        BorderColor="#1a8c1a" BorderWidth="1"
                         Clicked="SearchUsersClicked" />
 
                     <CollectionView x:Name="SearchResults" BackgroundColor="Transparent"
                         SelectionMode="Single" SelectionChanged="SearchResultSelected">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-                                <StackLayout Padding="10,5">
-                                    <Label Text="{Binding Username}" TextColor="#0086ff"
-                                        FontFamily="{StaticResource ConsoleCode}" FontSize="22" />
+                                <StackLayout Padding="8,4">
+                                    <Label TextColor="#00e5ff"
+                                        FontFamily="{StaticResource ConsoleCode}" FontSize="16">
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="  " />
+                                                <Span Text="{Binding Username}" />
+                                                <Span Text=" [+pgp]" ForegroundColor="#1a8c1a" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
                                 </StackLayout>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
@@ -45,36 +53,39 @@
                 </StackLayout>
             </Frame>
 
-            <!-- Conversations list -->
-            <Label Text="&#xf0e0;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#9f00ff"
-                Margin="15,15,0,0" />
-            <Label TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Conversations"
-                FontSize="35" Margin="15,0,0,0" />
+            <!-- Channel header -->
+            <StackLayout BackgroundColor="#111111" Padding="12,8">
+                <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                    Text="*** Active channels:" />
+            </StackLayout>
+            <BoxView HeightRequest="1" BackgroundColor="#1a8c1a" />
 
+            <!-- Conversations list - styled like IRC channel list -->
             <RefreshView x:Name="ConversationRefresh" IsRefreshing="{Binding IsRefreshing}"
-                RefreshColor="Blue" Command="{Binding RefreshCommand}">
-                <CollectionView x:Name="ConversationsList" BackgroundColor="Black"
+                RefreshColor="#33ff33" Command="{Binding RefreshCommand}">
+                <CollectionView x:Name="ConversationsList" BackgroundColor="#0a0a0a"
                     SelectionMode="Single" SelectionChanged="ConversationSelected">
                     <CollectionView.EmptyView>
                         <StackLayout Padding="15">
-                            <Label TextColor="#0086ff" FontFamily="{StaticResource ConsoleCode}" FontSize="18"
-                                Text="No conversations yet. Tap 'New' to start messaging." />
+                            <Label TextColor="#1a8c1a" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                                Text="*** No channels. Use /join to start a conversation." />
                         </StackLayout>
                     </CollectionView.EmptyView>
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <StackLayout Padding="15,10" BackgroundColor="Black">
-                                <StackLayout Orientation="Horizontal">
-                                    <Label Text="&#xf007;" FontFamily="FontAwesomeSolid" FontSize="22"
-                                        TextColor="#0086ff" VerticalOptions="Center" />
-                                    <Label Text="{Binding Username}" TextColor="#ffaf00"
-                                        FontFamily="{StaticResource ConsoleCode}" FontSize="25"
-                                        VerticalOptions="Center" Margin="10,0,0,0" />
-                                </StackLayout>
-                                <Label Text="{Binding LastMessagePreview}" TextColor="#0086ff"
-                                    FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                            <StackLayout Padding="12,8" BackgroundColor="#0a0a0a">
+                                <Label FontFamily="{StaticResource ConsoleCode}" FontSize="16">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="#" ForegroundColor="#1a8c1a" />
+                                            <Span Text="{Binding Username}" ForegroundColor="#ffb000" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <Label TextColor="#555555" FontFamily="{StaticResource ConsoleCode}" FontSize="13"
+                                    Text="{Binding LastMessagePreview}"
                                     LineBreakMode="TailTruncation" MaxLines="1" />
-                                <BoxView HeightRequest="1" BackgroundColor="#141d2b" Margin="0,5,0,0" />
+                                <BoxView HeightRequest="1" BackgroundColor="#1a1a1a" Margin="0,4,0,0" />
                             </StackLayout>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>

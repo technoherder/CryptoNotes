@@ -65,7 +65,13 @@ namespace CryptoNotes.Server
                 context.Response.Headers.Add("X-XSS-Protection", "1; mode=block");
                 context.Response.Headers.Add("Referrer-Policy", "no-referrer");
                 context.Response.Headers.Add("Cache-Control", "no-store");
-                context.Response.Headers.Add("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+
+                // Admin page needs inline styles; API endpoints use strict CSP
+                var csp = context.Request.Path.StartsWithSegments("/admin")
+                    ? "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'"
+                    : "default-src 'none'; frame-ancestors 'none'";
+                context.Response.Headers.Add("Content-Security-Policy", csp);
+
                 context.Response.Headers.Add("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
                 // Remove server identification header
                 context.Response.Headers.Remove("Server");

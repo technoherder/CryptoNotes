@@ -5,77 +5,94 @@
     x:Class="CryptoNotes.Views.AppLockPage"
     NavigationPage.HasNavigationBar="false">
     <ContentPage.Content>
-        <ScrollView BackgroundColor="Black" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-            <StackLayout VerticalOptions="CenterAndExpand" Spacing="20" Padding="30">
+        <ScrollView BackgroundColor="#0a0a0a" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <StackLayout VerticalOptions="CenterAndExpand" Spacing="10" Padding="20">
 
-                <!-- App logo / lock icon -->
-                <Label Text="&#xf023;" FontFamily="FontAwesomeSolid" FontSize="80"
-                    TextColor="#9f00ff" HorizontalTextAlignment="Center" />
-                <Label TextColor="#0086ff" FontFamily="{StaticResource ConsoleCode}"
-                    Text="CryptoNotes" FontSize="50" HorizontalTextAlignment="Center" />
+                <!-- ASCII lock art -->
+                <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="11"
+                    HorizontalTextAlignment="Center" LineBreakMode="NoWrap"
+                    Text="     _____&#10;    |     |&#10;    | | | |&#10;    |_____|&#10;   /|   |\&#10;  / |   | \&#10; /__|___|__\&#10;    |   |&#10;    |___|" />
+
+                <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}"
+                    Text="*** CryptoNotes v1.0 ***" FontSize="20" HorizontalTextAlignment="Center" />
+                <Label TextColor="#1a8c1a" FontFamily="{StaticResource ConsoleCode}"
+                    Text="[ ENCRYPTED TERMINAL ]" FontSize="13" HorizontalTextAlignment="Center" />
+
+                <BoxView HeightRequest="1" BackgroundColor="#1a8c1a" Margin="0,5" />
 
                 <!-- Setup mode: first-time password creation -->
-                <StackLayout x:Name="SetupView" IsVisible="false" Spacing="15">
-                    <Label TextColor="#20C20E" FontFamily="{StaticResource ConsoleCode}" FontSize="18"
-                        HorizontalTextAlignment="Center"
-                        Text="Create an app password to protect your data. This password encrypts all your keys and messages." />
+                <StackLayout x:Name="SetupView" IsVisible="false" Spacing="10">
+                    <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="*** First run detected. Create a passphrase to encrypt your data." />
+                    <Label TextColor="#cccccc" FontFamily="{StaticResource ConsoleCode}" FontSize="13"
+                        Text="*** This passphrase protects ALL local keys and messages with AES-256." />
 
-                    <Label TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
-                        Text="Password (min 8 characters):" />
-                    <Entry x:Name="SetupPasswordTxt" TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}"
-                        FontSize="22" BackgroundColor="#141d2b" PlaceholderColor="LightGray"
-                        IsPassword="true" Placeholder="Enter password" />
+                    <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="Enter passphrase (min 8 chars):" />
+                    <Entry x:Name="SetupPasswordTxt" TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}"
+                        FontSize="20" BackgroundColor="#111111" PlaceholderColor="#1a8c1a"
+                        IsPassword="true" Placeholder="********" />
 
-                    <Label TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
-                        Text="Confirm password:" />
-                    <Entry x:Name="SetupConfirmTxt" TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}"
-                        FontSize="22" BackgroundColor="#141d2b" PlaceholderColor="LightGray"
-                        IsPassword="true" Placeholder="Confirm password" />
+                    <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="Confirm passphrase:" />
+                    <Entry x:Name="SetupConfirmTxt" TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}"
+                        FontSize="20" BackgroundColor="#111111" PlaceholderColor="#1a8c1a"
+                        IsPassword="true" Placeholder="********" />
 
-                    <Label TextColor="#ff4444" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
-                        HorizontalTextAlignment="Center"
-                        Text="WARNING: If you forget this password, all data will be unrecoverable." />
+                    <Label TextColor="#ff3333" FontFamily="{StaticResource ConsoleCode}" FontSize="12"
+                        Text="!!! WARNING: Forgotten passphrase = permanent data loss !!!" />
 
-                    <Button x:Name="SetupBtn" Text="Set Password"
-                        BackgroundColor="#007fdf" TextColor="White" Clicked="SetupClicked" />
+                    <Button x:Name="SetupBtn" Text="/PASS - Set Passphrase"
+                        FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                        BackgroundColor="#111111" TextColor="#33ff33"
+                        BorderColor="#1a8c1a" BorderWidth="1"
+                        Clicked="SetupClicked" />
                 </StackLayout>
 
                 <!-- Unlock mode: password entry -->
-                <StackLayout x:Name="UnlockView" IsVisible="false" Spacing="15">
-                    <Label TextColor="#0086ff" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
-                        HorizontalTextAlignment="Center"
-                        Text="Enter your password to unlock" />
+                <StackLayout x:Name="UnlockView" IsVisible="false" Spacing="10">
+                    <Label TextColor="#cccccc" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="*** Connection requires authentication" />
 
-                    <Entry x:Name="UnlockPasswordTxt" TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}"
-                        FontSize="25" BackgroundColor="#141d2b" PlaceholderColor="LightGray"
-                        IsPassword="true" Placeholder="Password" Completed="UnlockCompleted" />
+                    <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="Password:" />
+                    <Entry x:Name="UnlockPasswordTxt" TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}"
+                        FontSize="20" BackgroundColor="#111111" PlaceholderColor="#1a8c1a"
+                        IsPassword="true" Placeholder="Enter passphrase" Completed="UnlockCompleted" />
 
-                    <Button x:Name="UnlockBtn" Text="Unlock"
-                        BackgroundColor="#007fdf" TextColor="White" Clicked="UnlockClicked" />
+                    <Button x:Name="UnlockBtn" Text="/LOGIN"
+                        FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                        BackgroundColor="#111111" TextColor="#33ff33"
+                        BorderColor="#1a8c1a" BorderWidth="1"
+                        Clicked="UnlockClicked" />
 
-                    <Label x:Name="AttemptsLabel" TextColor="#ff4444" FontFamily="{StaticResource ConsoleCode}"
-                        FontSize="14" HorizontalTextAlignment="Center" IsVisible="false" />
+                    <Label x:Name="AttemptsLabel" TextColor="#ff3333" FontFamily="{StaticResource ConsoleCode}"
+                        FontSize="13" HorizontalTextAlignment="Center" IsVisible="false" />
                 </StackLayout>
 
                 <!-- Wiped notice -->
-                <StackLayout x:Name="WipedView" IsVisible="false" Spacing="15">
-                    <Label Text="&#xf7ba;" FontFamily="FontAwesomeSolid" FontSize="60"
-                        TextColor="#ff4444" HorizontalTextAlignment="Center" />
-                    <Label TextColor="#ff4444" FontFamily="{StaticResource ConsoleCode}" FontSize="20"
+                <StackLayout x:Name="WipedView" IsVisible="false" Spacing="10">
+                    <Label TextColor="#ff3333" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
                         HorizontalTextAlignment="Center"
-                        Text="ALL DATA HAS BEEN WIPED" />
-                    <Label TextColor="#0086ff" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                        Text="*** KILL - ALL DATA WIPED ***" />
+                    <Label TextColor="#ff3333" FontFamily="{StaticResource ConsoleCode}" FontSize="12"
                         HorizontalTextAlignment="Center"
-                        Text="Too many failed password attempts. All keys, messages, and account data have been permanently destroyed." />
-                    <Button Text="Start Fresh" BackgroundColor="#9f00ff" TextColor="White"
+                        Text="Too many failed attempts. All keys, messages, and account data have been permanently destroyed." />
+                    <Label TextColor="#cccccc" FontFamily="{StaticResource ConsoleCode}" FontSize="12"
+                        HorizontalTextAlignment="Center"
+                        Text="*** Connection terminated by server" />
+                    <Button Text="/RECONNECT - Start Fresh"
+                        FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                        BackgroundColor="#111111" TextColor="#ff3333"
+                        BorderColor="#ff3333" BorderWidth="1"
                         Clicked="StartFreshClicked" />
                 </StackLayout>
 
                 <!-- Status message -->
-                <Frame x:Name="StatusFrame" BackgroundColor="#141d2b" CornerRadius="5"
-                    Padding="10" IsVisible="false">
-                    <Label x:Name="StatusLabel" TextColor="#ff4444" FontFamily="{StaticResource ConsoleCode}"
-                        FontSize="14" HorizontalTextAlignment="Center" />
+                <Frame x:Name="StatusFrame" BackgroundColor="#111111" CornerRadius="0"
+                    Padding="10" IsVisible="false" BorderColor="#1a8c1a">
+                    <Label x:Name="StatusLabel" TextColor="#ff3333" FontFamily="{StaticResource ConsoleCode}"
+                        FontSize="13" />
                 </Frame>
 
             </StackLayout>

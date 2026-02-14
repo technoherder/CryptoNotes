@@ -1,42 +1,43 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ContentPage
-	xmlns="http://xamarin.com/schemas/2014/forms"
-	xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="CryptoNotes.Views.DecryptMessagePage" Title="Decryptor">
-	<ContentPage.Content>
-		<ScrollView BackgroundColor="Black" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-			<StackLayout Spacing="20" Padding="15">
-				<Label Text="&#xf13e;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#9f00ff" />
-				<Picker x:Name="privatePicker"
-                            Title="Select Private Key"
-                            TitleColor="Red"></Picker>
-				<Label x:Name="PwdLbl" >
-					<Label.FormattedText>
-						<FormattedString>
-							<Span Text="&#xf30d;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#1ae3f3" />
-							<Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Password:" FontSize="45"  />
-						</FormattedString>
-					</Label.FormattedText>
-				</Label>
-				<Entry x:Name="PwdTxt" TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" 
-                    FontSize="50" BackgroundColor="#141d2b" PlaceholderColor="LightGray"
-                    Keyboard="Plain" IsPassword="true" Placeholder="Password"
-                    />
-				<Label>
-					<Label.FormattedText>
-						<FormattedString>
-							<Span Text="&#xf3c2;" FontFamily="FontAwesomeSolid" FontSize="35" TextColor="#CC0000" />
-							<Span TextColor="#9f00ff" FontFamily="{StaticResource ConsoleCode}" Text="Decrypted Message:" FontSize="45"  />
-						</FormattedString>
-					</Label.FormattedText>
-				</Label>
-				<Editor x:Name="MessageTxt" TextColor="#ffaf00" FontFamily="{StaticResource ConsoleCode}" Placeholder="Message here"
-                    FontSize="50" BackgroundColor="#141d2b" PlaceholderColor="LightGray" HeightRequest="200"
-                    Keyboard="Chat" 
-                    />
-				<Button Margin="0,10,0,0" Text="Decrpyt Message" Command="{Binding OpenWebCommand}" x:Name="decryptBtn"
-                    BackgroundColor="#007fdf" TextColor="White" Clicked="DecryptMessageClicked" />
-			</StackLayout>
-		</ScrollView>
-	</ContentPage.Content>
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="CryptoNotes.Views.DecryptMessagePage" Title="/DECRYPT">
+    <ContentPage.Content>
+        <ScrollView BackgroundColor="#0a0a0a" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <StackLayout Spacing="10" Padding="15">
+
+                <Label TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}" FontSize="16"
+                    Text="*** PGP message decryption:" />
+                <BoxView HeightRequest="1" BackgroundColor="#1a8c1a" />
+
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="PRIVATE KEY:" />
+                <Picker x:Name="privatePicker"
+                    Title="Select Private Key"
+                    TitleColor="#1a8c1a" TextColor="#33ff33" BackgroundColor="#111111" />
+
+                <Label x:Name="PwdLbl" TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="PASSPHRASE:" />
+                <Entry x:Name="PwdTxt" TextColor="#33ff33" FontFamily="{StaticResource ConsoleCode}"
+                    FontSize="16" BackgroundColor="#111111" PlaceholderColor="#1a8c1a"
+                    Keyboard="Plain" IsPassword="true" Placeholder="********" />
+
+                <Label TextColor="#ffb000" FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    Text="CIPHERTEXT:" />
+                <Editor x:Name="MessageTxt" TextColor="#ff3333" FontFamily="{StaticResource ConsoleCode}"
+                    Placeholder="Paste PGP message..." PlaceholderColor="#1a8c1a"
+                    FontSize="14" BackgroundColor="#111111" HeightRequest="150"
+                    Keyboard="Chat" />
+
+                <Button Margin="0,10,0,0" Text="/DECRYPT"
+                    x:Name="decryptBtn"
+                    FontFamily="{StaticResource ConsoleCode}" FontSize="14"
+                    BackgroundColor="#111111" TextColor="#33ff33"
+                    BorderColor="#1a8c1a" BorderWidth="1"
+                    Clicked="DecryptMessageClicked" />
+
+            </StackLayout>
+        </ScrollView>
+    </ContentPage.Content>
 </ContentPage>
