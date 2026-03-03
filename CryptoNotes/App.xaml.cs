@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 using CryptoNotes.Services;
@@ -11,6 +12,7 @@ namespace CryptoNotes
     static MessagingApiService messagingApi;
     static E2EEncryptionService encryptionService;
     static SecurityService securityService;
+    static bool databaseInitialized = false;
 
     public App()
     {
@@ -18,6 +20,28 @@ namespace CryptoNotes
 
       // Always show the lock screen first - require password to access app
       MainPage = new AppLockPage();
+    }
+
+    /// <summary>
+    /// Initialize the encrypted database with the user's passcode.
+    /// Must be called after successful unlock or setup.
+    /// </summary>
+    public static async Task InitializeDatabaseAsync(string passcode)
+    {
+      if (!databaseInitialized)
+      {
+        await Database.InitializeWithKeyAsync(passcode);
+        databaseInitialized = true;
+      }
+    }
+
+    /// <summary>
+    /// Reset database state when data is wiped.
+    /// </summary>
+    public static void ResetDatabaseState()
+    {
+      database = null;
+      databaseInitialized = false;
     }
 
     protected override void OnStart()
@@ -34,6 +58,9 @@ namespace CryptoNotes
         // Clear cached auth token from the messaging API service
         if (messagingApi != null)
           messagingApi.ClearCredentials();
+
+        // Reset database state so it will be re-initialized on next unlock
+        ResetDatabaseState();
 
         MainPage = new AppLockPage();
       }

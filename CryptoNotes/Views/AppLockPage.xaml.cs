@@ -70,7 +70,7 @@ namespace CryptoNotes.Views
             }
         }
 
-        private void SetupClicked(object sender, EventArgs e)
+        private async void SetupClicked(object sender, EventArgs e)
         {
             var password = SetupPasswordTxt.Text;
             var confirm = SetupConfirmTxt.Text;
@@ -86,9 +86,16 @@ namespace CryptoNotes.Views
                 return;
             }
 
+            SetupBtn.IsEnabled = false;
+            ShowStatus("Setting up encryption...");
+
             try
             {
                 App.Security.SetupPassword(password);
+
+                // Initialize the encrypted database with the passcode
+                await App.InitializeDatabaseAsync(password);
+
                 SetupPasswordTxt.Text = "";
                 SetupConfirmTxt.Text = "";
                 NavigateToApp();
@@ -96,6 +103,10 @@ namespace CryptoNotes.Views
             catch (Exception ex)
             {
                 ShowStatus(ex.Message);
+            }
+            finally
+            {
+                SetupBtn.IsEnabled = true;
             }
         }
 
@@ -109,7 +120,7 @@ namespace CryptoNotes.Views
             AttemptUnlock();
         }
 
-        private void AttemptUnlock()
+        private async void AttemptUnlock()
         {
             var password = UnlockPasswordTxt.Text;
             if (string.IsNullOrEmpty(password))
@@ -119,16 +130,23 @@ namespace CryptoNotes.Views
             }
 
             UnlockBtn.IsEnabled = false;
+            ShowStatus("Unlocking...");
 
             bool success = App.Security.TryUnlock(password);
-            UnlockPasswordTxt.Text = "";
 
             if (success)
             {
+                ShowStatus("Initializing database...");
+
+                // Initialize the encrypted database with the passcode
+                await App.InitializeDatabaseAsync(password);
+
+                UnlockPasswordTxt.Text = "";
                 NavigateToApp();
             }
             else
             {
+                UnlockPasswordTxt.Text = "";
                 int remaining = App.Security.GetRemainingAttempts();
                 if (remaining <= 0)
                 {
@@ -147,6 +165,7 @@ namespace CryptoNotes.Views
         private void StartFreshClicked(object sender, EventArgs e)
         {
             App.Security.WipeAllData();
+            App.ResetDatabaseState();
             ShowSetupView();
             StatusFrame.IsVisible = false;
         }
