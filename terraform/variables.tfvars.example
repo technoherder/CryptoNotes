@@ -1,0 +1,33 @@
+# =============================================================================
+# CryptoNotes Terraform Variables
+#
+# Copy this file to terraform.tfvars and customize:
+#   cp variables.tfvars.example terraform.tfvars
+# =============================================================================
+
+# AWS region for Lightsail (us-east-1 has best pricing)
+aws_region = "us-east-1"
+
+# Your domain name
+domain = "talk.example.com"
+
+# Instance configuration
+instance_name = "cryptonotes-server"
+blueprint_id  = "debian_12"
+
+# Bundle options (pick one):
+#   nano_3_0   = $5/mo   - 512MB RAM, 1 vCPU, 20GB SSD (sufficient for small deployments)
+#   micro_3_0  = $10/mo  - 1GB RAM, 2 vCPU, 40GB SSD
+#   small_3_0  = $20/mo  - 2GB RAM, 2 vCPU, 60GB SSD
+bundle_id = "nano_3_0"
+
+# HTTPS port (default: 443, use 1337 or custom port if desired)
+https_port = 443
+
+# Name of your SSH key pair in Lightsail (create one in the console first)
+# Leave empty to use Lightsail's default key
+ssh_key_name = ""
+
+# Set to true to create DNS zone in Lightsail
+# Set to false if you manage DNS elsewhere
+create_dns_zone = false
