@@ -138,11 +138,11 @@ namespace CryptoNotes.Views
             SenderUsername = msg.SenderUsername,
             RecipientUsername = _myUsername,
             PlainText = plainText,
-            SentAt = DateTime.Parse(msg.SentAt),
+            SentAtDateTime = DateTime.Parse(msg.SentAt),
             IsOutgoing = false
           };
 
-          await App.Database.SaveChatMessageAsync(chatMessage);
+          await App.Database.SaveChatMessageAsync(chatMessage, _myUsername);
 
           if (msg.SenderUsername == _otherUsername)
           {
@@ -204,11 +204,11 @@ namespace CryptoNotes.Views
             SenderUsername = _myUsername,
             RecipientUsername = _otherUsername,
             PlainText = text,
-            SentAt = DateTime.UtcNow,
+            SentAtDateTime = DateTime.UtcNow,
             IsOutgoing = true
           };
 
-          await App.Database.SaveChatMessageAsync(chatMessage);
+          await App.Database.SaveChatMessageAsync(chatMessage, _myUsername);
           _messages.Add(ToDisplay(chatMessage));
           ScrollToBottom();
         }
@@ -244,7 +244,7 @@ namespace CryptoNotes.Views
         PlainText = msg.PlainText,
         SenderLabel = $"<{nick}>",
         SenderColor = isOutgoing ? Color.FromHex("#33ff33") : Color.FromHex("#00e5ff"),
-        TimeStamp = msg.SentAt.ToLocalTime().ToString("[HH:mm]")
+        TimeStamp = msg.SentAtDateTime.ToLocalTime().ToString("[HH:mm]")
       };
     }
 

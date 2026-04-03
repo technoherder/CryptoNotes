@@ -91,7 +91,7 @@ namespace CryptoNotes.Views
 
             try
             {
-                App.Security.SetupPassword(password);
+                await App.Security.SetupPasswordAsync(password);
 
                 // Initialize the encrypted database with the passcode
                 await App.InitializeDatabaseAsync(password);

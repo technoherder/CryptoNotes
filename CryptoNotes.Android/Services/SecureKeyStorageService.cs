@@ -215,7 +215,7 @@ namespace CryptoNotes.Droid.Services
                             return null;
 
                         var cipher = Cipher.GetInstance(Transformation);
-                        cipher.Init(CipherMode.EncryptMode, key);
+                        cipher.Init(Javax.Crypto.CipherMode.EncryptMode, key);
 
                         var iv = cipher.GetIV();
                         var encrypted = cipher.DoFinal(plainData);
@@ -281,7 +281,7 @@ namespace CryptoNotes.Droid.Services
                         Buffer.BlockCopy(encryptedData, 1 + ivLength, ciphertext, 0, ciphertext.Length);
 
                         var cipher = Cipher.GetInstance(Transformation);
-                        cipher.Init(CipherMode.DecryptMode, key, new GCMParameterSpec(GcmTagLength, iv));
+                        cipher.Init(Javax.Crypto.CipherMode.DecryptMode, key, new GCMParameterSpec(GcmTagLength, iv));
 
                         return cipher.DoFinal(ciphertext);
                     }
@@ -387,7 +387,7 @@ namespace CryptoNotes.Droid.Services
                 return null;
 
             var cipher = Cipher.GetInstance(Transformation);
-            cipher.Init(CipherMode.EncryptMode, key);
+            cipher.Init(Javax.Crypto.CipherMode.EncryptMode, key);
 
             var iv = cipher.GetIV();
             var encrypted = cipher.DoFinal(data);
@@ -435,7 +435,7 @@ namespace CryptoNotes.Droid.Services
             Buffer.BlockCopy(encryptedData, 2 + ivLength, ciphertext, 0, ciphertext.Length);
 
             var cipher = Cipher.GetInstance(Transformation);
-            cipher.Init(CipherMode.DecryptMode, key, new GCMParameterSpec(GcmTagLength, iv));
+            cipher.Init(Javax.Crypto.CipherMode.DecryptMode, key, new GCMParameterSpec(GcmTagLength, iv));
 
             return cipher.DoFinal(ciphertext);
         }
@@ -449,7 +449,7 @@ namespace CryptoNotes.Droid.Services
             using (var aes = Aes.Create())
             {
                 aes.KeySize = 256;
-                aes.Mode = CipherMode.CBC;
+                aes.Mode = System.Security.Cryptography.CipherMode.CBC;
                 aes.Padding = PaddingMode.PKCS7;
                 aes.Key = key;
                 aes.GenerateIV();
@@ -483,7 +483,7 @@ namespace CryptoNotes.Droid.Services
             using (var aes = Aes.Create())
             {
                 aes.KeySize = 256;
-                aes.Mode = CipherMode.CBC;
+                aes.Mode = System.Security.Cryptography.CipherMode.CBC;
                 aes.Padding = PaddingMode.PKCS7;
                 aes.Key = key;
                 aes.IV = iv;

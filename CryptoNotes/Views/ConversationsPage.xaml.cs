@@ -54,7 +54,7 @@ namespace CryptoNotes.Views
         {
           Username = otherUser,
           LastMessagePreview = preview,
-          LastMessageAt = msg.SentAt.ToString("g")
+          LastMessageAt = msg.SentAtDateTime.ToString("g")
         });
       }
     }
@@ -85,11 +85,11 @@ namespace CryptoNotes.Views
             SenderUsername = msg.SenderUsername,
             RecipientUsername = _myUsername,
             PlainText = plainText,
-            SentAt = DateTime.Parse(msg.SentAt),
+            SentAtDateTime = DateTime.Parse(msg.SentAt),
             IsOutgoing = false
           };
 
-          await App.Database.SaveChatMessageAsync(chatMessage);
+          await App.Database.SaveChatMessageAsync(chatMessage, _myUsername);
         }
         catch (Exception ex)
         {
