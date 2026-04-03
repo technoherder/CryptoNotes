@@ -68,19 +68,28 @@ fi
 # =============================================================================
 # 3. Configure Firewall (UFW)
 # =============================================================================
-log "Configuring firewall..."
-apt-get install -y -qq ufw
+echo ""
+warn "UFW firewall setup will reset all existing rules and only allow SSH (22), HTTP (80), and HTTPS (${HTTPS_PORT})."
+warn "If your provider (e.g. AWS Lightsail) has its own firewall/security groups, enabling UFW may lock you out."
+echo -e "${CYAN}[?]${NC} Configure UFW firewall rules? (y/N)"
+read -r ufw_confirm
+if [[ "${ufw_confirm}" =~ ^[Yy]$ ]]; then
+    log "Configuring firewall..."
+    apt-get install -y -qq ufw
 
-ufw --force reset
-ufw default deny incoming
-ufw default allow outgoing
-ufw allow ssh
-ufw allow 80/tcp           # HTTP (for Let's Encrypt challenge)
-ufw allow ${HTTPS_PORT}/tcp   # HTTPS
-ufw allow ${HTTPS_PORT}/udp   # HTTP/3 (QUIC)
-ufw --force enable
+    ufw --force reset
+    ufw default deny incoming
+    ufw default allow outgoing
+    ufw allow ssh
+    ufw allow 80/tcp           # HTTP (for Let's Encrypt challenge)
+    ufw allow ${HTTPS_PORT}/tcp   # HTTPS
+    ufw allow ${HTTPS_PORT}/udp   # HTTP/3 (QUIC)
+    ufw --force enable
 
-log "Firewall configured: SSH, HTTP, HTTPS allowed"
+    log "Firewall configured: SSH, HTTP, HTTPS (${HTTPS_PORT}) allowed"
+else
+    warn "Skipping UFW setup. Make sure your provider's firewall allows ports 22, 80, and ${HTTPS_PORT}."
+fi
 
 # =============================================================================
 # 4. Install Fail2ban
