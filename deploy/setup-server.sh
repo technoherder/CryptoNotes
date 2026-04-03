@@ -3,15 +3,16 @@
 # CryptoNotes Server Setup Script for Debian/Ubuntu
 #
 # Usage:
-#   sudo ./setup-server.sh                    # Uses default port 443
-#   sudo ./setup-server.sh 1337               # Uses custom port 1337
-#   HTTPS_PORT=1337 sudo ./setup-server.sh    # Alternative: via environment
+#   sudo DOMAIN=msg.example.com ./setup-server.sh
+#   sudo DOMAIN=msg.example.com ./setup-server.sh 1337               # Custom port
+#   sudo DOMAIN=msg.example.com HTTPS_PORT=1337 ./setup-server.sh    # Alt syntax
 # =============================================================================
 
 set -euo pipefail
 
 # Configuration
 HTTPS_PORT="${1:-${HTTPS_PORT:-443}}"
+DOMAIN="${DOMAIN:?Set DOMAIN environment variable, e.g.: sudo DOMAIN=msg.example.com ./setup-server.sh}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -108,7 +109,7 @@ log "Fail2ban configured"
 # =============================================================================
 # 5. Create app directory
 # =============================================================================
-APP_DIR="/opt/cryptonotes"
+APP_DIR="${APP_DIR:-/opt/cryptonotes}"
 log "Creating application directory at ${APP_DIR}..."
 mkdir -p "${APP_DIR}"
 cd "${APP_DIR}"
@@ -258,7 +259,7 @@ EOF
 
 # .env file
 cat > .env << EOF
-DOMAIN=talk.technoherder.com
+DOMAIN=${DOMAIN}
 HTTPS_PORT=${HTTPS_PORT}
 TOKEN_SIGNING_KEY=${TOKEN_KEY}
 TOKEN_EXPIRY_HOURS=24
