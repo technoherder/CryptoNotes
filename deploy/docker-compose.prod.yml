@@ -46,7 +46,7 @@ services:
   # --------------------------------------------------------------------------
   cryptonotes:
     build:
-      context: .
+      context: ..
       dockerfile: docker/Dockerfile
     container_name: cryptonotes-server
     restart: unless-stopped

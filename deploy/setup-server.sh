@@ -121,144 +121,11 @@ TOKEN_KEY=$(openssl rand -base64 48)
 log "Generated secure token signing key"
 
 # =============================================================================
-# 7. Create configuration files
+# 7. Generate .env (secrets — not stored in repo)
 # =============================================================================
-log "Creating configuration files..."
+log "Generating .env..."
 
-# Caddyfile
-cat > Caddyfile << 'EOF'
-{$DOMAIN}:{$HTTPS_PORT} {
-    reverse_proxy cryptonotes:5000
-
-    header {
-        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        X-Frame-Options "DENY"
-        X-Content-Type-Options "nosniff"
-        X-XSS-Protection "1; mode=block"
-        Referrer-Policy "strict-origin-when-cross-origin"
-        -Server
-    }
-
-    log {
-        output file /data/access.log {
-            roll_size 10mb
-            roll_keep 5
-        }
-    }
-
-    encode gzip zstd
-}
-EOF
-
-# docker-compose.yml
-cat > docker-compose.yml << 'EOF'
-version: "3.8"
-
-services:
-  caddy:
-    image: caddy:2-alpine
-    container_name: cryptonotes-caddy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "\${HTTPS_PORT:-443}:\${HTTPS_PORT:-443}"
-      - "\${HTTPS_PORT:-443}:\${HTTPS_PORT:-443}/udp"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    environment:
-      - DOMAIN=${DOMAIN}
-      - HTTPS_PORT=${HTTPS_PORT}
-    networks:
-      - frontend
-    depends_on:
-      - cryptonotes
-    cap_drop:
-      - ALL
-    cap_add:
-      - NET_BIND_SERVICE
-    security_opt:
-      - no-new-privileges:true
-
-  cryptonotes:
-    image: ghcr.io/cryptonotes/server:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: cryptonotes-server
-    restart: unless-stopped
-    expose:
-      - "5000"
-    volumes:
-      - cryptonotes-data:/app/data
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://0.0.0.0:5000
-      - Security__TokenSigningKey=${TOKEN_SIGNING_KEY}
-      - Security__TokenExpiryHours=${TOKEN_EXPIRY_HOURS:-24}
-      - Security__MaxLoginAttemptsPerMinute=${MAX_LOGIN_ATTEMPTS:-5}
-      - Security__MaxMessageSizeBytes=${MAX_MESSAGE_SIZE:-65536}
-      - Security__MinPasswordLength=${MIN_PASSWORD_LENGTH:-8}
-      - Security__MessageExpiryDays=${MESSAGE_EXPIRY_DAYS:-30}
-    deploy:
-      resources:
-        limits:
-          cpus: "0.80"
-          memory: 256M
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp:size=10M
-    networks:
-      - frontend
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
-  backup:
-    image: alpine:3.18
-    container_name: cryptonotes-backup
-    restart: unless-stopped
-    volumes:
-      - cryptonotes-data:/data:ro
-      - cryptonotes-backups:/backups
-    entrypoint: /bin/sh
-    command: >
-      -c 'while true; do
-        TIMESTAMP=$$(date +%Y%m%d-%H%M%S);
-        if [ -f /data/cryptonotes.db ]; then
-          cp /data/cryptonotes.db "/backups/cryptonotes-$$TIMESTAMP.db";
-          echo "[$$TIMESTAMP] Backup created";
-          ls -t /backups/cryptonotes-*.db 2>/dev/null | tail -n +8 | xargs rm -f 2>/dev/null;
-        fi;
-        sleep 86400;
-      done'
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    networks: []
-
-volumes:
-  cryptonotes-data:
-  cryptonotes-backups:
-  caddy-data:
-  caddy-config:
-
-networks:
-  frontend:
-    driver: bridge
-EOF
-
-# .env file
-cat > .env << EOF
+cat > "${APP_DIR}/deploy/.env" << EOF
 DOMAIN=${DOMAIN}
 HTTPS_PORT=${HTTPS_PORT}
 TOKEN_SIGNING_KEY=${TOKEN_KEY}
@@ -269,8 +136,8 @@ MIN_PASSWORD_LENGTH=8
 MESSAGE_EXPIRY_DAYS=30
 EOF
 
-chmod 600 .env
-log "Configuration files created"
+chmod 600 "${APP_DIR}/deploy/.env"
+log ".env created"
 
 # =============================================================================
 # Done
@@ -282,9 +149,8 @@ echo "==========================================================================
 echo ""
 echo "Next steps:"
 echo "  1. Ensure DNS A record points to this server's IP"
-echo "  2. Copy the CryptoNotes source code to ${APP_DIR}"
-echo "  3. Build and start: cd ${APP_DIR} && docker compose up -d --build"
+echo "  2. Build and start: cd ${APP_DIR}/deploy && docker compose -f docker-compose.prod.yml up -d --build"
 echo ""
-echo "Configuration: ${APP_DIR}/.env"
-echo "Logs: docker compose logs -f"
+echo "Configuration: ${APP_DIR}/deploy/.env"
+echo "Logs: docker compose -f docker-compose.prod.yml logs -f"
 echo ""
